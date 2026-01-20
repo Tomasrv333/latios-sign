@@ -1,0 +1,15 @@
+{
+    "name": "@latios/shared-types",
+    "version": "0.0.0",
+    "main": "./index.ts",
+    "types": "./index.ts",
+    "license": "MIT",
+    "scripts": {
+        "lint": "eslint \"**/*.ts*\""
+    },
+    "devDependencies": {
+        "@latios/config": "workspace:*",
+        "typescript": "^5.3.3",
+        "eslint": "^8.56.0"
+    }
+}
