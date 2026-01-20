@@ -37,7 +37,17 @@
 - `pnpm dev` runs successfully.
 - API serves Template CRUD.
 - Web displays the Drag & Drop Editor at `/dashboard/templates/create`.
+- **MVP Editor Completed**:
+    - Absolute positioning drag and drop (Canvas).
+    - Grid Snapping (20px).
+    - Block Resizing.
+    - Block Handles for better UX.
+    - Editable Document Title.
+    - Real-time Saving.
+    - Exact Layout Preview.
 
 ## ⏭️ Next Steps
-- Connect Editor "Save" button to API.
-- Implement Template rendering/preview.
+- **Milestone 4**: Document Sending & Signing Engine.
+    - Sending documents to email.
+    - Signing interface for recipients.
+    - PDF Generation.

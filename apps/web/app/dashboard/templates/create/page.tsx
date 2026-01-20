@@ -37,11 +37,11 @@ export default function CreateTemplatePage() {
             }
 
             const data = await response.json();
-            alert('Plantilla guardada exitosamente!');
-            router.push('/dashboard/templates'); // Or wherever appropriate
+            // User requested no alerts. Just redirect.
+            router.push('/dashboard/templates');
         } catch (error) {
             console.error(error);
-            alert('Error al guardar la plantilla');
+            // alert('Error al guardar la plantilla'); // Removed as requested
         } finally {
             setIsSaving(false);
         }

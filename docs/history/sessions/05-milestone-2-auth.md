@@ -28,8 +28,12 @@
     - If trying to access `/auth` with token -> Redirects to `/dashboard`.
     - Root `/` -> Redirects to `/dashboard`.
 - [x] **Logout & UI Refinement**:
-    - **Logout**: Implemented `handleLogout` in `Sidebar.tsx` (clears token & cookie -> redirects to login).
-    - **Layout**: Fixed "sticky sidebar" issue by switching from `pl-64` (padding) to `ml-64` (margin) in `dashboard/layout.tsx`.
+    - **Logout**: Implemented `handleLogout` in `Sidebar.tsx`.
+    - **Layout**: Fixed "sticky sidebar" issue (margin instead of padding).
+- [x] **Template Engine Fixes**:
+    - **UX**: Removed all browser `alert()` popups (Verified).
+    - **Edit Page**: Fixed `loading is not defined` crash by restoring state. Added Authorization headers.
+    - **List Page**: Fixed "Abrir" button clickability (z-index issue resolved).
 
 ## 📋 Context
 - Authentication is fully functional and **Enforced**.

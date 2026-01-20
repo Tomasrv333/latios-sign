@@ -57,12 +57,12 @@ export default function TemplatesPage() {
             setTemplates((prev) => prev.filter((t) => t.id !== id));
         } catch (error) {
             console.error(error);
-            alert('Error al eliminar la plantilla');
+            // alert('Error al eliminar la plantilla'); // Removed as requested
         }
     };
 
     return (
-        <div className="space-y-6">
+        <div className="p-8 max-w-7xl mx-auto space-y-6">
             <header className="flex justify-between items-center">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900">Mis Plantillas</h2>
@@ -129,8 +129,10 @@ export default function TemplatesPage() {
                                 >
                                     Eliminar
                                 </button>
-                                <span className="text-brand-600 font-medium hover:underline pointer-events-none">
-                                    Abrir
+                                <span className="text-brand-600 font-medium hover:underline pointer-events-auto">
+                                    <Link href={`/dashboard/templates/${template.id}`}>
+                                        Abrir
+                                    </Link>
                                 </span>
                             </div>
                         </div>

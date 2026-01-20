@@ -42,10 +42,17 @@
     - [x] **Frontend**: Template Renderer (Preview) <!-- id: 30 -->
         - [x] Create `TemplateRenderer` component
         - [x] Add Preview Modal to Edit Page
+        - [x] Fix Layout to match Canvas (Absolute Positioning)
     - [x] **Frontend**: Delete Template <!-- id: 31 -->
         - [x] Add Delete button to List View
         - [x] Add Delete button to Edit View
         - [x] Wire up API call
+    - [x] **UX Polish**
+        - [x] Remove alerts.
+        - [x] Add Error Banners.
+        - [x] Add Loading States.
+        - [x] Add Drag Handles & Resizing.
+        - [x] Fix NaN errors on drop.
 
 ### Milestone 2: Identity & Access Management (Implemented)
 - [x] **Frontend (Web)**
@@ -59,9 +66,10 @@
     - [x] Remove `getFallbackCompanyId` (Strict Auth enforced).
 
 ### Current Status
+- **Milestone 3 (Template Engine)**: Completed.
 - **Backend**: Strict Auth enabled.
-- **Frontend**: Middleware protects Dashboard. Login sets session.
-- **Next**: Verify functionality.
+- **Frontend**: Editor is MVP ready.
+- **Next**: Milestone 4 - Document Sending & Signing.
 
 ---
 

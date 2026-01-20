@@ -12,24 +12,28 @@ export default function EditTemplatePage() {
     const id = params.id as string;
     const router = useRouter();
 
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(true);
     const [blocks, setBlocks] = useState<EditorBlock[]>([]);
     const [name, setName] = useState("");
-    const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-
     const [showPreview, setShowPreview] = useState(false);
 
     useEffect(() => {
         if (!id) return;
 
-        fetch(`/api/templates/${id}`)
+        const token = localStorage.getItem('accessToken');
+        fetch(`/api/templates/${id}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
             .then((res) => {
                 if (!res.ok) throw new Error('Failed to fetch template');
                 return res.json();
             })
             .then((data) => {
                 setName(data.name);
-                // Ensure we handle cases where structure or blocks might be missing/different
                 if (data.structure && Array.isArray(data.structure.blocks)) {
                     setBlocks(data.structure.blocks);
                 } else {
@@ -39,21 +43,23 @@ export default function EditTemplatePage() {
             })
             .catch((err) => {
                 console.error(err);
-                alert('No se pudo cargar la plantilla');
-                router.push('/dashboard/templates');
+                setError('No se pudo cargar la plantilla. Verifica tu conexión o permisos.');
+                setLoading(false);
             });
     }, [id, router]);
 
     const handleSave = async () => {
-        if (!name.trim()) return alert("Por favor ingresa un nombre para la plantilla");
-        if (blocks.length === 0) return alert("La plantilla debe tener al menos un bloque");
+        if (!name.trim()) return;
+        if (blocks.length === 0) return;
 
         try {
             setIsSaving(true);
+            const token = localStorage.getItem('accessToken');
             const response = await fetch(`/api/templates/${id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     name,
@@ -66,11 +72,11 @@ export default function EditTemplatePage() {
                 throw new Error('Failed to update template');
             }
 
-            alert('Plantilla actualizada exitosamente!');
+            // Success feedback could be a simple state change or redirect
             router.push('/dashboard/templates');
         } catch (error) {
             console.error(error);
-            alert('Error al actualizar la plantilla');
+            setError('Error al actualizar la plantilla');
         } finally {
             setIsSaving(false);
         }
@@ -87,6 +93,11 @@ export default function EditTemplatePage() {
     return (
         <div className="bg-white min-h-screen">
             <div className="h-16 border-b border-gray-200 px-6 flex items-center justify-between bg-white z-10 relative">
+                {error && (
+                    <div className="absolute top-16 left-0 w-full bg-red-50 text-red-600 px-6 py-2 text-sm border-b border-red-100">
+                        {error}
+                    </div>
+                )}
                 <div className="flex items-center gap-4">
                     <input
                         type="text"
@@ -108,15 +119,19 @@ export default function EditTemplatePage() {
                         onClick={async () => {
                             if (!confirm('¿Eliminar esta plantilla permanentemente?')) return;
                             try {
-                                const res = await fetch(`/api/templates/${id}`, { method: 'DELETE' });
+                                const token = localStorage.getItem('accessToken');
+                                const res = await fetch(`/api/templates/${id}`, {
+                                    method: 'DELETE',
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                });
                                 if (res.ok) {
                                     router.push('/dashboard/templates');
                                 } else {
-                                    alert('Error al eliminar');
+                                    setError('Error al eliminar');
                                 }
                             } catch (e) {
                                 console.error(e);
-                                alert('Error al eliminar');
+                                setError('Error al eliminar');
                             }
                         }}
                         className="px-4 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md"
