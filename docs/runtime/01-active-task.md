@@ -19,38 +19,49 @@
 - [x] **Verification**
     - [x] Ensure `pnpm dev` runs all apps with the new structure.
 
-### Milestone 3: Template Engine (MVP) (Current Focus)
-- [ ] **Frontend (Web)**
-    - [ ] **Layout**: Implement "Mediso" Sidebar and Shell in `apps/web`.
+### Milestone 3: Template Engine (MVP) (Completed)
+- [x] **Frontend (Web)**
+    - [x] **Layout**: Implement "Mediso" Sidebar and Shell in `apps/web`.
     - [x] **Frontend**: Setup Drag & Drop Editor <!-- id: 23 -->
     - [x] **Backend**: Generate `TemplatesModule` <!-- id: 24 -->
     - [x] **Backend**: Define `Template` Schema <!-- id: 25 -->
     - [x] **Backend**: Implement Template CRUD <!-- id: 26 -->
+    - [x] **Integration**: Connect Editor Save Button <!-- id: 27 -->
+        - [x] Lift state from Editor to CreatePage
+        - [x] Add Name Input to UI
+        - [x] Update Backend to accept `structure`
+        - [x] Wire up API call
+        - [x] **Fix**: Bypass Proxy issues by connecting directly to `127.0.0.1:3001`.
+    - [x] **Frontend**: Template List View <!-- id: 28 -->
+        - [x] Create `/dashboard/templates/page.tsx`
+        - [x] Fetch and display templates
+    - [x] **Frontend**: Template Edit View <!-- id: 29 -->
+        - [x] Create `/dashboard/templates/[id]/page.tsx`
+        - [x] Fetch template and hydrate Editor
+        - [x] Update save logic to PATCH
+    - [x] **Frontend**: Template Renderer (Preview) <!-- id: 30 -->
+        - [x] Create `TemplateRenderer` component
+        - [x] Add Preview Modal to Edit Page
+    - [x] **Frontend**: Delete Template <!-- id: 31 -->
+        - [x] Add Delete button to List View
+        - [x] Add Delete button to Edit View
+        - [x] Wire up API call
+
+### Milestone 2: Identity & Access Management (Implemented)
+- [x] **Frontend (Web)**
+    - [x] Create `auth/login/page.tsx` and Layout.
+    - [x] Integrate with `api/auth/login`.
+    - [x] Store JWT Token (Cookie + LocalStorage).
+    - [x] **Middleware**: Protect `/dashboard` routes.
+- [x] **Backend (API)**
+    - [x] Verify `AuthModule` (Done).
+    - [x] Enforce `JwtAuthGuard` globally (except login).
+    - [x] Remove `getFallbackCompanyId` (Strict Auth enforced).
 
 ### Current Status
-- **Backend**: Template Engine MVP is ready.
-- **Frontend**: Editor UI is implemented (not yet connected to API).
-- **Environment**: Stable (Prisma 5.10, Tailwind v3).templates.
-
-### Milestone 3 (Part 2): Backend Template Engine
-- **Prisma Schema**: Added `Template` model with relations to `Company` and JSON structure field.
-- **Templates Module**: Implemented CRUD operations (`create`, `findAll`, `findOne`, `update`, `remove`).
-- **Issues Resolved**: 
-    - Fixed Prisma CLI version mismatch by installing `prisma@5.10.2`.
-    - Resolved `.env` loading issues.
-    - Installed missing auth dependencies (`@nestjs/passport`, etc.).
-
-
-### Milestone 2: Identity & Multi-tenancy (Completed)
-- [x] **Auth Dependencies**
-    - [x] Install `@nestjs/passport`, `@nestjs/jwt`, `passport-jwt`.
-- [x] **Auth Module**
-    - [x] Generate `modules/auth`.
-    - [x] Implement `AuthService` (Login with Email/Password).
-    - [x] Implement `JwtStrategy`.
-- [x] **Multi-tenancy**
-    - [x] Implement `TenantGuard` (Extract `companyId` from User).
-    - [x] Ensure all DB queries use `companyId`.
+- **Backend**: Strict Auth enabled.
+- **Frontend**: Middleware protects Dashboard. Login sets session.
+- **Next**: Verify functionality.
 
 ---
 

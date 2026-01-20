@@ -6,11 +6,12 @@ import { Template } from '@prisma/client';
 export class TemplatesService {
     constructor(private prisma: PrismaService) { }
 
-    async create(companyId: string, data: { name: string; description?: string }) {
+    async create(companyId: string, data: { name: string; description?: string; structure?: any }) {
         return this.prisma.template.create({
             data: {
                 ...data,
                 companyId,
+                structure: data.structure ?? {},
             },
         });
     }
@@ -52,4 +53,5 @@ export class TemplatesService {
             where: { id },
         });
     }
+
 }

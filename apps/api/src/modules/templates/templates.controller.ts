@@ -1,12 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, UseGuards } from '@nestjs/common';
 import { TemplatesService } from './templates.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('templates')
+@UseGuards(JwtAuthGuard)
 export class TemplatesController {
     constructor(private readonly templatesService: TemplatesService) { }
 
     @Post()
-    create(@Request() req, @Body() createTemplateDto: { name: string; description?: string }) {
+    create(@Request() req, @Body() createTemplateDto: { name: string; description?: string; structure?: any }) {
         return this.templatesService.create(req.user.companyId, createTemplateDto);
     }
 

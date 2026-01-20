@@ -34,10 +34,19 @@ const dropAnimation: DragOverlayProps['dropAnimation'] = {
     }),
 };
 
-export function Editor() {
-    const [blocks, setBlocks] = useState<EditorBlock[]>([]);
+interface EditorProps {
+    blocks: EditorBlock[];
+    onChange: React.Dispatch<React.SetStateAction<EditorBlock[]>>;
+}
+
+export function Editor({ blocks, onChange: setBlocks }: EditorProps) {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [activeType, setActiveType] = useState<BlockType | null>(null);
+    const [isMounted, setIsMounted] = useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -121,6 +130,8 @@ export function Editor() {
     function handleDeleteBlock(id: string) {
         setBlocks((items) => items.filter((b) => b.id !== id));
     }
+
+    if (!isMounted) return null;
 
     return (
         <div className="flex h-[calc(100vh-64px)] overflow-hidden">
