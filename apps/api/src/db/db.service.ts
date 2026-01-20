@@ -1,0 +1,21 @@
+import { Injectable } from '@nestjs/common';
+import { Pool } from 'pg';
+
+@Injectable()
+export class DbService {
+  private readonly pool: Pool;
+
+  constructor() {
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error('DATABASE_URL is not set');
+    }
+
+    this.pool = new Pool({ connectionString });
+  }
+
+  async ping(): Promise<boolean> {
+    const res = await this.pool.query('SELECT 1 as ok');
+    return res.rows?.[0]?.ok === 1;
+  }
+}

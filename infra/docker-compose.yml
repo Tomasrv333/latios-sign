@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: latios-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: latios
+      POSTGRES_PASSWORD: latios_dev
+      POSTGRES_DB: latios
+    volumes:
+      - latios_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  latios_pgdata:
