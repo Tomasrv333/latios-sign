@@ -19,6 +19,28 @@
 - [x] **Verification**
     - [x] Ensure `pnpm dev` runs all apps with the new structure.
 
+### Milestone 3: Template Engine (MVP) (Current Focus)
+- [ ] **Frontend (Web)**
+    - [ ] **Layout**: Implement "Mediso" Sidebar and Shell in `apps/web`.
+    - [x] **Frontend**: Setup Drag & Drop Editor <!-- id: 23 -->
+    - [x] **Backend**: Generate `TemplatesModule` <!-- id: 24 -->
+    - [x] **Backend**: Define `Template` Schema <!-- id: 25 -->
+    - [x] **Backend**: Implement Template CRUD <!-- id: 26 -->
+
+### Current Status
+- **Backend**: Template Engine MVP is ready.
+- **Frontend**: Editor UI is implemented (not yet connected to API).
+- **Environment**: Stable (Prisma 5.10, Tailwind v3).templates.
+
+### Milestone 3 (Part 2): Backend Template Engine
+- **Prisma Schema**: Added `Template` model with relations to `Company` and JSON structure field.
+- **Templates Module**: Implemented CRUD operations (`create`, `findAll`, `findOne`, `update`, `remove`).
+- **Issues Resolved**: 
+    - Fixed Prisma CLI version mismatch by installing `prisma@5.10.2`.
+    - Resolved `.env` loading issues.
+    - Installed missing auth dependencies (`@nestjs/passport`, etc.).
+
+
 ### Milestone 2: Identity & Multi-tenancy (Completed)
 - [x] **Auth Dependencies**
     - [x] Install `@nestjs/passport`, `@nestjs/jwt`, `passport-jwt`.

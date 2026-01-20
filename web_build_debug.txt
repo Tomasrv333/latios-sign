@@ -1,0 +1,33 @@
+STDOUT:
+
+> @latios/web@0.1.0 build C:\Users\uinformatica8.GIGHA\OneDrive - GIGHA SAS - JIRO SAS\Documentos\Tomas\latios-sign\apps\web
+> next build
+
+▲ Next.js 16.1.1 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 12.8s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/5) ...
+  Generating static pages using 7 workers (1/5) 
+  Generating static pages using 7 workers (2/5) 
+  Generating static pages using 7 workers (3/5) 
+✓ Generating static pages using 7 workers (5/5) in 3.1s
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+└ ○ /dashboard
+
+
+○  (Static)  prerendered as static content
+
+
+
+STDERR:
+
+
+ERROR:
+No error

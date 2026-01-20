@@ -16,6 +16,7 @@ model Company {
   updatedAt DateTime @updatedAt
   
   users     User[]
+  templates Template[]
 }
 
 model User {
@@ -44,3 +45,21 @@ model AuditLog {
   
   createdAt DateTime @default(now())
 }
+
+ model Template {
+   id          String   @id @default(uuid())
+   name        String
+   description String?
+   structure   Json     @default("{}") // Stores the React DnD state
+   
+   isPublished Boolean  @default(false)
+   
+   companyId   String
+   company     Company  @relation(fields: [companyId], references: [id])
+   
+   createdAt   DateTime @default(now())
+   updatedAt   DateTime @updatedAt
+ }
+
+// Update Company to include templates relation
+

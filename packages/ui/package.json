@@ -3,6 +3,10 @@
     "version": "0.0.0",
     "main": "./src/index.tsx",
     "types": "./src/index.tsx",
+    "exports": {
+        ".": "./src/index.tsx",
+        "./tailwind.config": "./tailwind.config.ts"
+    },
     "license": "MIT",
     "scripts": {
         "lint": "eslint \"**/*.ts*\""

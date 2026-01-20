@@ -1,5 +1,3 @@
-import * as React from "react";
-
-export function Button() {
-    return <button>Click me</button>;
-}
+export * from './components/button';
+export * from './components/card';
+// configuration is consumed via direct import

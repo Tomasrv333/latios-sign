@@ -4,6 +4,7 @@ import { HealthController } from './health.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { TemplatesModule } from './modules/templates/templates.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './modules/auth/jwt-auth.guard';
 import { TenantGuard } from './core/guards/tenant.guard';
@@ -17,6 +18,7 @@ import { TenantGuard } from './core/guards/tenant.guard';
     PrismaModule,
     AuthModule,
     UsersModule,
+    TemplatesModule,
   ],
   controllers: [HealthController],
   providers: [

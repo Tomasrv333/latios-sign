@@ -1,9 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
-import { DbService } from './db/db.service';
+import { PrismaService } from './prisma/prisma.service';
 
 @Controller('health')
 export class HealthController {
-  constructor(private readonly db: DbService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   @Get()
   health() {
@@ -13,16 +13,14 @@ export class HealthController {
   @Get('db')
   async healthDb() {
     try {
-      await this.db.ping();
+      // Simple query to check DB connectivity
+      await this.prisma.$queryRaw`SELECT 1`;
       return { ok: true, db: 'up' };
     } catch (e: any) {
       return {
         ok: false,
         db: 'down',
-        code: e?.code,
         message: e?.message,
-        // útil para pg: host/port/db que intentó usar
-        detail: e?.detail,
       };
     }
   }

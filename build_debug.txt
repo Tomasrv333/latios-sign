@@ -1,0 +1,75 @@
+STDOUT:
+
+> @latios/api@0.0.1 build C:\Users\uinformatica8.GIGHA\OneDrive - GIGHA SAS - JIRO SAS\Documentos\Tomas\latios-sign\apps\api
+> nest build
+
+Found 7 error(s).
+
+C:\Users\uinformatica8.GIGHA\OneDrive - GIGHA SAS - JIRO SAS\Documentos\Tomas\latios-sign\apps\api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @latios/api@0.0.1 build: `nest build`
+Exit status 1
+
+
+STDERR:
+[96msrc/modules/auth/auth.module.ts[0m:[93m4[0m:[93m32[0m - [91merror[0m[90m TS2307: [0mCannot find module '@nestjs/passport' or its corresponding type declarations.
+
+[7m4[0m import { PassportModule } from '@nestjs/passport';
+[7m [0m [91m                               ~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.module.ts[0m:[93m5[0m:[93m27[0m - [91merror[0m[90m TS2307: [0mCannot find module '@nestjs/jwt' or its corresponding type declarations.
+
+[7m5[0m import { JwtModule } from '@nestjs/jwt';
+[7m [0m [91m                          ~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m3[0m:[93m28[0m - [91merror[0m[90m TS2307: [0mCannot find module '@nestjs/jwt' or its corresponding type declarations.
+
+[7m3[0m import { JwtService } from '@nestjs/jwt';
+[7m [0m [91m                           ~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m4[0m:[93m25[0m - [91merror[0m[90m TS2307: [0mCannot find module 'bcrypt' or its corresponding type declarations.
+
+[7m4[0m import * as bcrypt from 'bcrypt';
+[7m [0m [91m                        ~~~~~~~~[0m
+[96msrc/modules/auth/jwt-auth.guard.ts[0m:[93m2[0m:[93m27[0m - [91merror[0m[90m TS2307: [0mCannot find module '@nestjs/passport' or its corresponding type declarations.
+
+[7m2[0m import { AuthGuard } from '@nestjs/passport';
+[7m [0m [91m                          ~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/jwt.strategy.ts[0m:[93m1[0m:[93m38[0m - [91merror[0m[90m TS2307: [0mCannot find module 'passport-jwt' or its corresponding type declarations.
+
+[7m1[0m import { ExtractJwt, Strategy } from 'passport-jwt';
+[7m [0m [91m                                     ~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/jwt.strategy.ts[0m:[93m2[0m:[93m34[0m - [91merror[0m[90m TS2307: [0mCannot find module '@nestjs/passport' or its corresponding type declarations.
+
+[7m2[0m import { PassportStrategy } from '@nestjs/passport';
+[7m [0m [91m                                 ~~~~~~~~~~~~~~~~~~[0m
+
+
+
+ERROR:
+Command failed: pnpm --filter @latios/api build
+[96msrc/modules/auth/auth.module.ts[0m:[93m4[0m:[93m32[0m - [91merror[0m[90m TS2307: [0mCannot find module '@nestjs/passport' or its corresponding type declarations.
+
+[7m4[0m import { PassportModule } from '@nestjs/passport';
+[7m [0m [91m                               ~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.module.ts[0m:[93m5[0m:[93m27[0m - [91merror[0m[90m TS2307: [0mCannot find module '@nestjs/jwt' or its corresponding type declarations.
+
+[7m5[0m import { JwtModule } from '@nestjs/jwt';
+[7m [0m [91m                          ~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m3[0m:[93m28[0m - [91merror[0m[90m TS2307: [0mCannot find module '@nestjs/jwt' or its corresponding type declarations.
+
+[7m3[0m import { JwtService } from '@nestjs/jwt';
+[7m [0m [91m                           ~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m4[0m:[93m25[0m - [91merror[0m[90m TS2307: [0mCannot find module 'bcrypt' or its corresponding type declarations.
+
+[7m4[0m import * as bcrypt from 'bcrypt';
+[7m [0m [91m                        ~~~~~~~~[0m
+[96msrc/modules/auth/jwt-auth.guard.ts[0m:[93m2[0m:[93m27[0m - [91merror[0m[90m TS2307: [0mCannot find module '@nestjs/passport' or its corresponding type declarations.
+
+[7m2[0m import { AuthGuard } from '@nestjs/passport';
+[7m [0m [91m                          ~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/jwt.strategy.ts[0m:[93m1[0m:[93m38[0m - [91merror[0m[90m TS2307: [0mCannot find module 'passport-jwt' or its corresponding type declarations.
+
+[7m1[0m import { ExtractJwt, Strategy } from 'passport-jwt';
+[7m [0m [91m                                     ~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/jwt.strategy.ts[0m:[93m2[0m:[93m34[0m - [91merror[0m[90m TS2307: [0mCannot find module '@nestjs/passport' or its corresponding type declarations.
+
+[7m2[0m import { PassportStrategy } from '@nestjs/passport';
+[7m [0m [91m                                 ~~~~~~~~~~~~~~~~~~[0m
+
