@@ -1,5 +1,11 @@
 import React from 'react';
 import { EditorBlock } from './Canvas';
+import { TableBlock } from './blocks/TableBlock';
+import { ImageBlock } from './blocks/ImageBlock';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for PDF BG in Renderer if needed, but usually passed via props or separate layer.
+// Simplified here.
 
 interface TemplateRendererProps {
     blocks: EditorBlock[];
@@ -33,6 +39,23 @@ export function TemplateRenderer({ blocks }: TemplateRendererProps) {
                             {block.content || ''}
                         </div>
                     )}
+
+                    {block.type === 'table' && (
+                        <TableBlock content={block.content} onChange={() => { }} readOnly />
+                    )}
+
+                    {block.type === 'image' && (
+                        <div className="w-full">
+                            <ImageBlock content={block.content} onChange={() => { }} readOnly />
+                        </div>
+                    )}
+
+                    {block.type === 'separator' && (
+                        <div className="py-2 w-full">
+                            <hr className="border-t-2 border-gray-300" />
+                        </div>
+                    )}
+
                     {block.type === 'date' && (
                         <div className="text-gray-800 bg-gray-50/30 p-1 border-b border-gray-300 inline-block w-full">
                             <span className="text-xs text-gray-500 block">Fecha</span>

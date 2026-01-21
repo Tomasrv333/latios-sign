@@ -5,6 +5,7 @@ import {
     DndContext,
     DragOverlay,
     closestCorners,
+    pointerWithin,
     KeyboardSensor,
     PointerSensor,
     useSensor,
@@ -36,9 +37,10 @@ const dropAnimation: DragOverlayProps['dropAnimation'] = {
 interface EditorProps {
     blocks: EditorBlock[];
     onChange: React.Dispatch<React.SetStateAction<EditorBlock[]>>;
+    pdfUrl?: string | null;
 }
 
-export function Editor({ blocks, onChange: setBlocks }: EditorProps) {
+export function Editor({ blocks, onChange: setBlocks, pdfUrl }: EditorProps) {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [activeType, setActiveType] = useState<BlockType | null>(null);
     const [isMounted, setIsMounted] = useState(false);
@@ -87,11 +89,11 @@ export function Editor({ blocks, onChange: setBlocks }: EditorProps) {
             return;
         }
 
-        // We only care if dropped on 'canvas'
-        if (over.id === 'canvas') {
-            // Calculate coordinates relative to the canvas
-            // active.rect.current.translated contains the final screen coordinates
-            // We need to subtract the canvas bounding box
+        // Determine if dropped within canvas (either directly on canvas or on a block inside it)
+        const isOverCanvas = over.id === 'canvas';
+        const isOverBlock = blocks.some(b => b.id === over.id);
+
+        if (isOverCanvas || isOverBlock) {
             const canvasElement = document.getElementById('canvas-area');
             let x = 0;
             let y = 0;
@@ -103,48 +105,28 @@ export function Editor({ blocks, onChange: setBlocks }: EditorProps) {
                 x = dropRect.left - canvasRect.left;
                 y = dropRect.top - canvasRect.top;
 
-                // Ensure positive coordinates and typical padding
                 x = Math.max(0, x);
-                // Adjust for the header height (approx 100px) if we want to default below it, 
-                // but for now user places it where they want.
                 y = Math.max(0, y);
             }
 
             if (active.data.current?.isToolboxItem) {
                 const type = active.data.current.type as BlockType;
                 const newBlock: EditorBlock = {
-                    id: crypto.randomUUID(),
+                    id: Math.random().toString(36).substring(2, 9),
                     type,
                     content: '',
                     x,
                     y,
-                    w: 300 // Default width
+                    w: 300
                 };
                 setBlocks((items) => [...items, newBlock]);
             } else {
-                // Moving an existing block on the canvas
                 setBlocks((items) => {
                     return items.map(b => {
                         if (b.id === active.id) {
-                            // Logic: The 'active' item has a 'translated' rect relative to viewport.
-                            // But cleaner way: use the delta accumulation.
-                            // Warning: 'event.delta' is the TOTAL displacement from start.
-                            // 'b.x/b.y' are the STARTING positions (captured in closure).
-                            // Wait! 'setBlocks' callback uses CURRENT 'items'.
-                            // BUT 'b' inside map is the CURRENT state *before* this drag applied?
-                            // No, 'b.x/y' is the position BEFORE drag started?
-                            // Actually, 'dnd-kit' modifiers apply to the visual transform.
-                            // The 'event.delta' is (current - start).
-                            // So we should add delta to the ORIGINAL position.
-                            // BUT if 'items' comes from state, does it have the original pos?
-                            // Yes, because we haven't updated state during drag.
-
                             const newX = Math.round(b.x + event.delta.x);
                             const newY = Math.round(b.y + event.delta.y);
 
-                            // Snap to 20px grid manually here if we want to PERSIST the snap?
-                            // The modifier only affected the visual drag.
-                            // To align the final data, we should probably snap the final coordinate too.
                             const snappedX = Math.round(newX / 20) * 20;
                             const snappedY = Math.round(newY / 20) * 20;
 
@@ -178,7 +160,7 @@ export function Editor({ blocks, onChange: setBlocks }: EditorProps) {
         <div className="flex h-[calc(100vh-64px)] overflow-hidden w-full">
             <DndContext
                 sensors={sensors}
-                collisionDetection={closestCorners}
+                collisionDetection={pointerWithin}
                 onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
@@ -189,12 +171,15 @@ export function Editor({ blocks, onChange: setBlocks }: EditorProps) {
                     blocks={blocks}
                     onDeleteBlock={handleDeleteBlock}
                     onUpdateBlock={handleUpdateBlock}
+                    pdfUrl={pdfUrl}
                 />
+
+
 
                 <DragOverlay dropAnimation={dropAnimation}>
                     {activeId ? (
                         activeType ? (
-                            <div className="p-4 bg-white border border-brand-500 shadow-xl rounded-lg opacity-80 w-64">
+                            <div className="p-4 bg-white border border-brand-500 shadow-xl rounded-lg opacity-80 w-64 pointer-events-none">
                                 <div className="flex items-center gap-3">
                                     {activeType === 'text' && <Type />}
                                     {activeType === 'date' && <Calendar />}

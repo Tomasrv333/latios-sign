@@ -2,15 +2,17 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { EditorBlock } from './Canvas';
+import { Settings, Trash2, GripVertical } from 'lucide-react';
 
 interface DraggableBlockProps {
     block: EditorBlock;
     onDelete: (id: string) => void;
     onUpdate: (id: string, updates: Partial<EditorBlock>) => void;
     children: React.ReactNode;
+    settingsMenu?: React.ReactNode; // Slot for custom actions
 }
 
-export function DraggableBlock({ block, onDelete, onUpdate, children }: DraggableBlockProps) {
+export function DraggableBlock({ block, onDelete, onUpdate, children, settingsMenu }: DraggableBlockProps) {
     const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } = useDraggable({
         id: block.id,
         data: {
@@ -20,8 +22,23 @@ export function DraggableBlock({ block, onDelete, onUpdate, children }: Draggabl
     });
 
     const [isResizing, setIsResizing] = useState(false);
-    // Local width state for smooth resizing without updating global state every pixel (optional, but good for perf)
-    // Actually, updating global state is fine for this scale.
+    const [showMenu, setShowMenu] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setShowMenu(false);
+            }
+        }
+        if (showMenu) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showMenu]);
 
     const style = {
         transform: CSS.Translate.toString(transform),
@@ -29,8 +46,8 @@ export function DraggableBlock({ block, onDelete, onUpdate, children }: Draggabl
         left: block.x,
         top: block.y,
         width: block.w || 300,
-        height: block.h, // Undefined means auto
-        zIndex: isDragging || isResizing ? 1000 : 1,
+        height: block.h,
+        zIndex: isDragging || isResizing || showMenu ? 1000 : 1, // Elevate when menu is open
         opacity: isDragging ? 0.8 : 1,
     };
 
@@ -64,35 +81,64 @@ export function DraggableBlock({ block, onDelete, onUpdate, children }: Draggabl
         <div
             ref={setNodeRef}
             style={style}
-            className={`group absolute flex flex-col ${isResizing ? 'cursor-ew-resize' : ''}`}
+            className={`group absolute flex flex-col ${isResizing ? 'cursor-ew-resize' : ''} transition-colors border ${showMenu ? 'border-brand-500 ring-1 ring-brand-500' : 'border-transparent hover:border-brand-300'}`}
         >
-            {/* Header / Drag Handle Wrapper */}
-            <div className="absolute -top-7 left-0 right-0 h-6 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity bg-brand-100/50 rounded-t border border-brand-200 px-2 backdrop-blur-sm z-50">
-                {/* Drag Handle - The ACTIVATOR */}
+            {/* Controls Overlay (Only visible on hover or menu open) */}
+            <div className={`absolute -top-3 left-0 right-0 flex justify-between pointer-events-none ${showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity z-50`}>
+                {/* Drag Handle (Top Left) */}
                 <div
                     ref={setActivatorNodeRef}
                     {...attributes}
                     {...listeners}
-                    className="cursor-move p-1 -ml-2 rounded hover:bg-brand-200 flex items-center gap-2 text-brand-700 font-medium text-xs"
+                    className="pointer-events-auto cursor-move bg-white shadow-sm border border-gray-200 rounded p-1 text-gray-500 hover:text-brand-600 hover:border-brand-300 transition-colors -ml-2 -mt-2"
+                    title="Arrastrar"
                 >
-                    <svg width="14" height="14" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 3C5.5 3.27614 5.27614 3.5 5 3.5C4.72386 3.5 4.5 3.27614 4.5 3C4.5 2.72386 4.72386 2.5 5 2.5C5.27614 2.5 5.5 2.72386 5.5 3ZM5.5 7.5C5.5 7.77614 5.27614 8 5 8C4.72386 8 4.5 7.77614 4.5 7.5C4.5 7.22386 4.72386 7 5 7C5.27614 7 5.5 7.22386 5.5 7.5ZM5.5 12C5.5 12.2761 5.27614 12.5 5 12.5C4.72386 12.5 4.5 12.2761 4.5 12C4.5 11.7239 4.72386 11.5 5 11.5C5.27614 11.5 5.5 11.7239 5.5 12ZM10.5 3C10.5 3.27614 10.2761 3.5 10 3.5C9.72386 3.5 9.5 3.27614 9.5 3C9.5 2.72386 9.72386 2.5 10 2.5C10.2761 2.5 10.5 2.72386 10.5 3ZM10.5 7.5C10.5 7.77614 10.2761 8 10 8C9.72386 8 9.5 7.77614 9.5 7.5C9.5 7.22386 9.72386 7 10 7C10.2761 7 10.5 7.22386 10.5 7.5ZM10.5 12C10.5 12.2761 10.2761 12.5 10 12.5C9.72386 12.5 9.5 12.2761 9.5 12C9.5 11.7239 9.72386 11.5 10 11.5C10.2761 11.5 10.5 11.7239 10.5 12Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
-                    {block.type.toUpperCase()}
+                    <GripVertical size={14} />
                 </div>
 
-                {/* Delete Button */}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isDragging) onDelete(block.id);
-                    }}
-                    className="text-gray-400 hover:text-red-500 rounded p-1 hover:bg-white"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
+                {/* Settings Trigger (Top Right) */}
+                <div className="relative pointer-events-auto -mr-2 -mt-2" ref={menuRef}>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowMenu(!showMenu);
+                        }}
+                        className={`bg-white shadow-sm border rounded p-1 transition-colors ${showMenu ? 'text-brand-600 border-brand-300' : 'text-gray-500 border-gray-200 hover:text-brand-600 hover:border-brand-300'}`}
+                        title="Ajustes"
+                    >
+                        <Settings size={14} />
+                    </button>
+
+                    {/* Settings Menu Dropdown */}
+                    {showMenu && (
+                        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden flex flex-col z-[100]">
+                            {/* Injected Actions (e.g. Table Rows) */}
+                            {settingsMenu && (
+                                <div className="p-1 border-b border-gray-100">
+                                    {settingsMenu}
+                                </div>
+                            )}
+
+                            {/* Standard Actions */}
+                            <div className="p-1">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete(block.id);
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded flex items-center gap-2"
+                                >
+                                    <Trash2 size={14} />
+                                    <span>Eliminar</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Content Content - Not Draggable directly (text selectable) */}
-            <div className={`relative ${isResizing ? 'pointer-events-none' : ''}`}>
+            {/* Content Content */}
+            <div className={`relative ${isResizing ? 'pointer-events-none' : ''} ${showMenu ? 'pointer-events-none opacity-50' : ''}`}>
                 {children}
             </div>
 
@@ -101,7 +147,7 @@ export function DraggableBlock({ block, onDelete, onUpdate, children }: Draggabl
                 className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-brand-400/20 z-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                 onPointerDown={handleResizeStart}
             >
-                <div className="w-1 h-6 bg-gray-300 rounded-full" />
+                <div className={`w-1 h-6 rounded-full transition-colors ${isResizing ? 'bg-brand-500' : 'bg-gray-300'}`} />
             </div>
         </div>
     );
