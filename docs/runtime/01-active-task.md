@@ -1,106 +1,47 @@
-# 🚀 Active Task: Latios Sign Engine Remediation
+# Task Checklist
 
-**Current Phase**: Phase 1 - Remediation & Alignment
-**Architect**: @Antigravity
+## Milestone 1: Core Backend & Data Model (Completed)
+- [x] Define Prisma Schema (User, Company, Template, Document)
+- [x] Seed Initial Data (Test Users, Company)
+- [x] Create Core Modules (Auth, Documents, Templates)
+- [x] Implement PDF Handling Logic (Basic)
 
----
+## Milestone 2: Authentication & Dashboard (Completed)
+- [x] Implement Login with JWT
+- [x] Create Dashboard Layout (Sidebar, Header)
+- [x] Implement "My Documents" View
+- [x] Implement Documents Statistics
 
-## 📅 Roadmap Overview
+## Milestone 3: Template Engine (Completed)
+- [x] Create Template Builder UI (Drag & Drop)
+- [x] Implement Tool Box (Text, Date, Signature)
+- [x] Save Template Structure to DB
+- [x] Render Template logic (Editor & Viewer)
 
-### Milestone 1: Fix & Configure Monorepo (Completed)
-- [x] **Shared Packages**
-    - [x] **Refactor**: Rename `packages/shared` -> `packages/shared-types`.
-    - [x] **Init**: Add `package.json` and `tsconfig.json` to `shared-types`.
-    - [x] **New**: Initialize `packages/ui` for the Design System.
-- [x] **Database Migration (Prisma)**
-    - [x] **Install**: Add `prisma` and `@prisma/client` to `apps/api`.
-    - [x] **Init**: Run `npx prisma init` in `apps/api`.
-    - [x] **Cleanup**: Remove legacy `src/db/db.service.ts` (raw pg).
-- [x] **Verification**
-    - [x] Ensure `pnpm dev` runs all apps with the new structure.
+## Milestone 4: Signing Process & RBAC (Completed)
+- [x] Public Signing Interface (`/sign/:token`)
+- [x] Role-Based Access Control (RBAC)
+    - [x] Roles: Admin, Leader, Manager, Member
+    - [x] Leader sees all, Manager sees own
+- [x] Manager Preview Modal (No Editor Access)
+- [x] UI Standardization (Buttons, Cards)
 
-### Milestone 3: Template Engine (MVP) (Completed)
-- [x] **Frontend (Web)**
-    - [x] **Layout**: Implement "Mediso" Sidebar and Shell in `apps/web`.
-    - [x] **Frontend**: Setup Drag & Drop Editor <!-- id: 23 -->
-    - [x] **Backend**: Generate `TemplatesModule` <!-- id: 24 -->
-    - [x] **Backend**: Define `Template` Schema <!-- id: 25 -->
-    - [x] **Backend**: Implement Template CRUD <!-- id: 26 -->
-    - [x] **Integration**: Connect Editor Save Button <!-- id: 27 -->
-        - [x] Lift state from Editor to CreatePage
-        - [x] Add Name Input to UI
-        - [x] Update Backend to accept `structure`
-        - [x] Wire up API call
-        - [x] **Fix**: Bypass Proxy issues by connecting directly to `127.0.0.1:3001`.
-    - [x] **Frontend**: Template List View <!-- id: 28 -->
-        - [x] Create `/dashboard/templates/page.tsx`
-        - [x] Fetch and display templates
-    - [x] **Frontend**: Template Edit View <!-- id: 29 -->
-        - [x] Create `/dashboard/templates/[id]/page.tsx`
-        - [x] Fetch template and hydrate Editor
-        - [x] Update save logic to PATCH
-    - [x] **Frontend**: Template Renderer (Preview) <!-- id: 30 -->
-        - [x] Create `TemplateRenderer` component
-        - [x] Add Preview Modal to Edit Page
-        - [x] Fix Layout to match Canvas (Absolute Positioning)
-    - [x] **Frontend**: Delete Template <!-- id: 31 -->
-        - [x] Add Delete button to List View
-        - [x] Add Delete button to Edit View
-        - [x] Wire up API call
-    - [x] **UX Polish**
-        - [x] Remove alerts.
-        - [x] Add Error Banners.
-        - [x] Add Loading States.
-        - [x] Add Drag Handles & Resizing.
-        - [x] Fix NaN errors on drop.
-
-### Milestone 2: Identity & Access Management (Implemented)
-- [x] **Frontend (Web)**
-    - [x] Create `auth/login/page.tsx` and Layout.
-    - [x] Integrate with `api/auth/login`.
-    - [x] Store JWT Token (Cookie + LocalStorage).
-    - [x] **Middleware**: Protect `/dashboard` routes.
-- [x] **Backend (API)**
-    - [x] Verify `AuthModule` (Done).
-    - [x] Enforce `JwtAuthGuard` globally (except login).
-    - [x] Remove `getFallbackCompanyId` (Strict Auth enforced).
-
-### Current Status
-- **Milestone 3 (Template Engine)**: Completed.
-- **Backend**: Strict Auth enabled.
-- **Frontend**: Editor is MVP ready.
-- **Next**: Milestone 4 - Document Sending & Signing.
-
-### Milestone 4: Document Sending & Signing (Active)
-- [x] **Backend: Document Engine** <!-- id: 50 -->
-    - [x] **Schema**: Define `Document` model (Instance of Template).
-    - [x] **API**: `DocumentsModule` (CRUD + Send + Stats).
-    - [x] **Token**: Generate secure public tokens.
-- [x] **Refactor: Separate Concerns** <!-- id: 53 -->
-    - [x] **Editor Cleanup**: Remove "Send" and "Upload PDF" from Template Editor.
-    - [x] **Dashboard**: Implement "Documentos" view for Managers.
-    - [x] **Creation Flow**: Implement `/dashboard/documents/create`.
-- [x] **Frontend: Signing Interface** <!-- id: 52 -->
-    - [x] **Public Page**: `/sign/[token]`.
-    - [x] **Canvas**: Render document in "Signing Mode".
-    - [x] **Action**: "Terminar y Firmar" (Logic implemented).
-    - [x] **Refinement**: Remove Editor grid, made text read-only.
-- [x] **Document Tracking & Dashboard**
-    - [x] Update status to `COMPLETED` on sign.
-    - [x] **Dashboard**: Real stats and recent activity.
-    - [x] **List**: Full document list view.
-    - [x] **Certificate**: Detailed "Certificate of Completion" view.
-- [x] **UI Standardization**
-    - [x] **Button**: Unified component (`rounded-lg`, `bg-brand-600`).
-    - [x] **Card**: Unified component (`rounded-xl`, `shadow-sm`).
-    - [x] Applied across Dashboard/Documents/Templates.
-
-### Next Steps (Deferred)
-- [ ] **PDF Generation**: Backend changes to generate signed PDF file.
-- [ ] **Backgrounds**: Upload PDF background support.
-
----
-
-## 🧠 Context
-- **Discovery**: The existing repo used raw `pg` and had an incomplete packages structure.
-- **Goal**: Align the template with Latios Sign specs (Prisma + Typed Packages).
+## Milestone 5: Advanced Template Editor (Current)
+- [x] **UX Overhaul**
+    - [x] **Clean Interface**: Removed Right Sidebar, moved functionality to Header.
+    - [x] **Header Polish**: Reordered icons (Delete left), improved Title Input styles (No border, visible icon).
+    - [x] **Configuration Modal**: 
+        - [x] Removed vertical borders.
+        - [x] Standardized Inputs (reused `Input` component).
+        - [x] Improved contrast of separators.
+    - [x] **Unified Block Settings**: Minimalist hover controls with "Settings" dropdown (Add Row/Col, Delete).
+    - [x] **Visual Polish**: Hidden borders by default, standardized inputs.
+    - [x] **Save Confirmation**: Added safety check before saving.
+- [x] **New Tools**
+    - [x] **Table Tool**: Fully editable via new Settings Menu.
+    - [x] **Image Tool**: Upload/Resize.
+    - [x] **Separator**: Visual Divider.
+- [ ] **Rich Text**: (Deferred)
+- [x] **Functional Fixes**
+    - [x] Drag & Drop Logic.
+    - [x] Preview Modal Z-Index (Portals).
