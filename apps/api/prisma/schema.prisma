@@ -17,6 +17,14 @@ model Company {
   
   users     User[]
   templates Template[]
+  documents Document[]
+}
+
+enum Role {
+  ADMIN
+  LEADER
+  MANAGER
+  MEMBER
 }
 
 model User {
@@ -29,7 +37,9 @@ model User {
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
   
-  role      String  @default("MEMBER") // OWNER, ADMIN, MEMBER
+  role      Role     @default(MEMBER)
+  
+  documents Document[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -53,9 +63,53 @@ model AuditLog {
    structure   Json     @default("{}") // Stores the React DnD state
    
    isPublished Boolean  @default(false)
+
+   // PDF Background
+   pdfUrl      String? // Relative path to the uploaded PDF
+   pdfWidth    Int?
+   pdfHeight   Int?
    
    companyId   String
    company     Company  @relation(fields: [companyId], references: [id])
+   
+   createdAt   DateTime @default(now())
+   updatedAt   DateTime @updatedAt
+   
+   documents   Document[]
+ }
+
+ model Document {
+   id          String   @id @default(uuid())
+   
+   status      String   @default("DRAFT") // DRAFT, SENT, VIEWED, COMPLETED
+   
+   // Recipient Info
+   recipientEmail String
+   recipientName  String?
+   
+   // Security
+   token       String   @unique // Public access token
+   
+   // Data Snapshot (What was sent)
+   structure   Json     // Copy of template structure at send time
+   pdfUrl      String?  // Copy of PDF URL
+   
+   // Data Capture (What was filled)
+   data        Json     @default("{}") // { "block-id": "value" }
+   
+   // Relations
+   templateId  String
+   template    Template @relation(fields: [templateId], references: [id])
+   
+   companyId   String
+   company     Company  @relation(fields: [companyId], references: [id])
+
+   userId      String?
+   user        User?    @relation(fields: [userId], references: [id])
+   
+   sentAt      DateTime?
+   viewedAt    DateTime?
+   signedAt    DateTime?
    
    createdAt   DateTime @default(now())
    updatedAt   DateTime @updatedAt
