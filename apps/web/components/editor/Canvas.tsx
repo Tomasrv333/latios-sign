@@ -5,6 +5,7 @@ import { BlockType } from './Toolbox';
 import { DraggableBlock } from './DraggableBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { ImageBlock } from './blocks/ImageBlock';
+
 import dynamic from 'next/dynamic';
 
 // Dynamically import PDF component to avoid SSR issues (DOMMatrix)
@@ -21,6 +22,7 @@ export interface EditorBlock {
     w?: number; // width
     h?: number; // height
     content?: string; // For text, table JSON, image URL, etc.
+    style?: React.CSSProperties; // New style property
 }
 
 interface CanvasProps {
@@ -34,6 +36,7 @@ export function Canvas({ blocks, onDeleteBlock, onUpdateBlock, pdfUrl }: CanvasP
     const { setNodeRef } = useDroppable({
         id: 'canvas',
     });
+    const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
 
     // Helper functions for Table manipulation
     const modifyTable = (blockId: string, action: 'addRow' | 'addCol' | 'removeRow' | 'removeCol') => {
@@ -60,7 +63,10 @@ export function Canvas({ blocks, onDeleteBlock, onUpdateBlock, pdfUrl }: CanvasP
     };
 
     return (
-        <div className="flex-1 bg-gray-100 p-8 pb-32 overflow-y-auto flex justify-center relative">
+        <div
+            className="flex-1 bg-gray-100 p-8 pb-32 overflow-y-auto flex justify-center relative"
+            onClick={() => setSelectedBlockId(null)}
+        >
             <div
                 ref={setNodeRef}
                 id="canvas-area"
@@ -80,6 +86,8 @@ export function Canvas({ blocks, onDeleteBlock, onUpdateBlock, pdfUrl }: CanvasP
                 )}
 
                 {blocks.map((block) => {
+                    const isSelected = selectedBlockId === block.id;
+
                     // Generate Settings Menu based on block type
                     let settingsMenu = null;
 
@@ -103,58 +111,79 @@ export function Canvas({ blocks, onDeleteBlock, onUpdateBlock, pdfUrl }: CanvasP
                         );
                     }
 
+                    // ... imports
+
+
+                    // ... inside map
                     return (
-                        <DraggableBlock
+                        <div
                             key={block.id}
-                            block={block}
-                            onDelete={onDeleteBlock}
-                            onUpdate={onUpdateBlock}
-                            settingsMenu={settingsMenu}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedBlockId(block.id);
+                            }}
+                            className="contents"
                         >
-                            {block.type === 'text' && (
-                                <textarea
-                                    className="w-full resize-none bg-transparent border-none focus:ring-0 p-0 text-black leading-relaxed font-normal placeholder:text-gray-300"
-                                    placeholder="Escribe aquí..."
-                                    value={block.content || ''}
-                                    onChange={(e) => onUpdateBlock(block.id, { content: e.target.value })}
-                                    style={{ height: '100%', minHeight: '1.5em' }}
-                                    onPointerDown={(e) => e.stopPropagation()}
-                                />
-                            )}
 
-                            {block.type === 'table' && (
-                                <TableBlock
-                                    content={block.content}
-                                    onChange={(newContent) => onUpdateBlock(block.id, { content: newContent })}
-                                />
-                            )}
 
-                            {block.type === 'image' && (
-                                <ImageBlock
-                                    content={block.content}
-                                    onChange={(newContent) => onUpdateBlock(block.id, { content: newContent })}
-                                />
-                            )}
+                            <DraggableBlock
+                                // ...
+                                block={block}
+                                onDelete={onDeleteBlock}
+                                onUpdate={onUpdateBlock}
+                                settingsMenu={settingsMenu}
+                                isSelected={isSelected}
+                            >
+                                {block.type === 'text' && (
+                                    <textarea
+                                        className="w-full resize-none bg-transparent border-none outline-none focus:ring-0 p-0 text-black leading-relaxed font-normal placeholder:text-gray-300"
+                                        placeholder="Escribe aquí..."
+                                        value={block.content || ''}
+                                        onChange={(e) => onUpdateBlock(block.id, { content: e.target.value })}
+                                        style={{
+                                            height: '100%',
+                                            minHeight: '1.5em',
+                                            ...block.style // Apply styles here
+                                        }}
+                                        onPointerDown={(e) => e.stopPropagation()}
+                                    />
+                                )}
 
-                            {block.type === 'separator' && (
-                                <div className="py-2 w-full">
-                                    <hr className="border-t-2 border-gray-300" />
-                                </div>
-                            )}
+                                {block.type === 'table' && (
+                                    <TableBlock
+                                        content={block.content}
+                                        onChange={(newContent) => onUpdateBlock(block.id, { content: newContent })}
+                                    />
+                                )}
 
-                            {(block.type === 'signature') && (
-                                <div className="h-24 border-2 border-dashed border-gray-300 rounded bg-gray-50/30 flex items-center justify-center text-gray-400">
-                                    <span className="text-sm">Espacio para Firma</span>
-                                </div>
-                            )}
+                                {block.type === 'image' && (
+                                    <ImageBlock
+                                        content={block.content}
+                                        onChange={(newContent) => onUpdateBlock(block.id, { content: newContent })}
+                                        style={block.style} // Pass style to ImageBlock if needed
+                                    />
+                                )}
 
-                            {block.type === 'date' && (
-                                <div className="text-gray-800 bg-gray-50/50 p-2 border-b border-gray-300 w-full">
-                                    <span className="text-xs text-gray-400 block mb-1">Fecha (Automática)</span>
-                                    DD / MM / AAAA
-                                </div>
-                            )}
-                        </DraggableBlock>
+                                {block.type === 'separator' && (
+                                    <div className="py-2 w-full">
+                                        <hr className="border-t-2 border-gray-300" style={block.style} />
+                                    </div>
+                                )}
+
+                                {(block.type === 'signature') && (
+                                    <div className="h-24 border-2 border-dashed border-gray-300 rounded bg-gray-50/30 flex items-center justify-center text-gray-400" style={block.style}>
+                                        <span className="text-sm">Espacio para Firma</span>
+                                    </div>
+                                )}
+
+                                {block.type === 'date' && (
+                                    <div className="text-gray-800 bg-gray-50/50 p-2 border-b border-gray-300 w-full" style={block.style}>
+                                        <span className="text-xs text-gray-400 block mb-1">Fecha (Automática)</span>
+                                        DD / MM / AAAA
+                                    </div>
+                                )}
+                            </DraggableBlock>
+                        </div>
                     );
                 })}
             </div>

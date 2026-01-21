@@ -35,7 +35,10 @@ export function TemplateRenderer({ blocks }: TemplateRendererProps) {
                     }}
                 >
                     {block.type === 'text' && (
-                        <div className="text-gray-900 leading-relaxed whitespace-pre-wrap font-normal">
+                        <div
+                            className="text-gray-900 leading-relaxed whitespace-pre-wrap font-normal"
+                            style={block.style}
+                        >
                             {block.content || ''}
                         </div>
                     )}
@@ -46,25 +49,25 @@ export function TemplateRenderer({ blocks }: TemplateRendererProps) {
 
                     {block.type === 'image' && (
                         <div className="w-full">
-                            <ImageBlock content={block.content} onChange={() => { }} readOnly />
+                            <ImageBlock content={block.content} onChange={() => { }} readOnly style={block.style} />
                         </div>
                     )}
 
                     {block.type === 'separator' && (
                         <div className="py-2 w-full">
-                            <hr className="border-t-2 border-gray-300" />
+                            <hr className="border-t-2 border-gray-300" style={block.style} />
                         </div>
                     )}
 
                     {block.type === 'date' && (
-                        <div className="text-gray-800 bg-gray-50/30 p-1 border-b border-gray-300 inline-block w-full">
+                        <div className="text-gray-800 bg-gray-50/30 p-1 border-b border-gray-300 inline-block w-full" style={block.style}>
                             <span className="text-xs text-gray-500 block">Fecha</span>
                             {/* In actual PDF generation this would be dynamically filled */}
                             DD / MM / AAAA
                         </div>
                     )}
                     {block.type === 'signature' && (
-                        <div className="h-24 border-b border-gray-800 flex items-end justify-center pb-2 text-gray-400 bg-gray-50/10">
+                        <div className="h-24 border-b border-gray-800 flex items-end justify-center pb-2 text-gray-400 bg-gray-50/10" style={block.style}>
                             Firma del Responsable
                         </div>
                     )}

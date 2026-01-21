@@ -69,3 +69,15 @@ Copiado de `docs/runtime/01-active-task.md`:
     - [x] Drag & Drop Logic.
     - [x] Preview Modal Z-Index (Portals).
 ```
+### 🖌️ Visual Refinements (Session 2)
+- `feat(toolbar):` Creado `BlockToolbar` flotante con estilos mejorados (iconos, contraste alto).
+- `fix(styles):` Eliminado borde de foco global (`outline-none`) en `globals.css`.
+- `fix(dnd):` Corregido artefacto visual ("caja blanca") al arrastrar elementos del canvas (`isToolboxDrag`).
+- `feat(dashboard):` Rediseñada página de Plantillas:
+    - Iconos en lugar de texto (Trash, Eye, Pencil).
+    - Modal de eliminación personalizado (adiós `alert`).
+    - Lógica de roles (Líder vs Gestor).
+
+## 📈 Next Steps
+- Implementar guardado en base de datos real (Backend Integration).
+- Pruebas de usuario con roles reales.

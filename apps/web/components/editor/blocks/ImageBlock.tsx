@@ -6,9 +6,10 @@ interface ImageBlockProps {
     content?: string; // URL of the image
     onChange: (content: string) => void;
     readOnly?: boolean;
+    style?: React.CSSProperties;
 }
 
-export function ImageBlock({ content, onChange, readOnly }: ImageBlockProps) {
+export function ImageBlock({ content, onChange, readOnly, style }: ImageBlockProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
 
@@ -72,6 +73,7 @@ export function ImageBlock({ content, onChange, readOnly }: ImageBlockProps) {
                 src={content}
                 alt="Uploaded content"
                 className="max-w-full h-auto rounded-md shadow-sm object-contain max-h-[500px]"
+                style={style}
             />
 
             {!readOnly && (

@@ -3,6 +3,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { EditorBlock } from './Canvas';
 import { Settings, Trash2, GripVertical } from 'lucide-react';
+import { BlockToolbar } from './BlockToolbar';
 
 interface DraggableBlockProps {
     block: EditorBlock;
@@ -10,9 +11,10 @@ interface DraggableBlockProps {
     onUpdate: (id: string, updates: Partial<EditorBlock>) => void;
     children: React.ReactNode;
     settingsMenu?: React.ReactNode; // Slot for custom actions
+    isSelected?: boolean;
 }
 
-export function DraggableBlock({ block, onDelete, onUpdate, children, settingsMenu }: DraggableBlockProps) {
+export function DraggableBlock({ block, onDelete, onUpdate, children, settingsMenu, isSelected }: DraggableBlockProps) {
     const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } = useDraggable({
         id: block.id,
         data: {
@@ -47,7 +49,7 @@ export function DraggableBlock({ block, onDelete, onUpdate, children, settingsMe
         top: block.y,
         width: block.w || 300,
         height: block.h,
-        zIndex: isDragging || isResizing || showMenu ? 1000 : 1, // Elevate when menu is open
+        zIndex: isDragging || isResizing || showMenu || isSelected ? 1000 : 1, // Elevate when menu is open or selected
         opacity: isDragging ? 0.8 : 1,
     };
 
@@ -81,10 +83,10 @@ export function DraggableBlock({ block, onDelete, onUpdate, children, settingsMe
         <div
             ref={setNodeRef}
             style={style}
-            className={`group absolute flex flex-col ${isResizing ? 'cursor-ew-resize' : ''} transition-colors border ${showMenu ? 'border-brand-500 ring-1 ring-brand-500' : 'border-transparent hover:border-brand-300'}`}
+            className={`group absolute flex flex-col ${isResizing ? 'cursor-ew-resize' : ''} transition-colors border ${showMenu || isSelected ? 'border-brand-500 ring-1 ring-brand-500' : 'border-transparent hover:border-brand-300'}`}
         >
-            {/* Controls Overlay (Only visible on hover or menu open) */}
-            <div className={`absolute -top-3 left-0 right-0 flex justify-between pointer-events-none ${showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity z-50`}>
+            {/* Controls Overlay (Only visible on hover, menu open, or SELECTED) */}
+            <div className={`absolute -top-3 left-0 right-0 flex justify-between pointer-events-none ${showMenu || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity z-50`}>
                 {/* Drag Handle (Top Left) */}
                 <div
                     ref={setActivatorNodeRef}
@@ -109,30 +111,14 @@ export function DraggableBlock({ block, onDelete, onUpdate, children, settingsMe
                         <Settings size={14} />
                     </button>
 
-                    {/* Settings Menu Dropdown */}
+                    {/* Settings Menu Dropdown / Toolbar */}
                     {showMenu && (
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden flex flex-col z-[100]">
-                            {/* Injected Actions (e.g. Table Rows) */}
-                            {settingsMenu && (
-                                <div className="p-1 border-b border-gray-100">
-                                    {settingsMenu}
-                                </div>
-                            )}
-
-                            {/* Standard Actions */}
-                            <div className="p-1">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onDelete(block.id);
-                                    }}
-                                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded flex items-center gap-2"
-                                >
-                                    <Trash2 size={14} />
-                                    <span>Eliminar</span>
-                                </button>
-                            </div>
-                        </div>
+                        <BlockToolbar
+                            block={block}
+                            onUpdate={onUpdate}
+                            onDelete={onDelete}
+                            customActions={settingsMenu}
+                        />
                     )}
                 </div>
             </div>

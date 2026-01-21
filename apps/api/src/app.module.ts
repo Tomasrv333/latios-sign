@@ -8,6 +8,10 @@ import { TemplatesModule } from './modules/templates/templates.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './modules/auth/jwt-auth.guard';
 import { TenantGuard } from './core/guards/tenant.guard';
+import { join } from 'path';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { UploadsModule } from './modules/uploads/uploads.module';
+import { DocumentsModule } from './modules/documents/documents.module';
 
 @Module({
   imports: [
@@ -15,10 +19,16 @@ import { TenantGuard } from './core/guards/tenant.guard';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', '..', 'uploads'), // Go up from dist/apps/api
+      serveRoot: '/uploads',
+    }),
     PrismaModule,
     AuthModule,
     UsersModule,
     TemplatesModule,
+    UploadsModule,
+    DocumentsModule,
   ],
   controllers: [HealthController],
   providers: [

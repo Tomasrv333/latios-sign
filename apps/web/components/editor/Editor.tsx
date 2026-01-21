@@ -43,6 +43,7 @@ interface EditorProps {
 export function Editor({ blocks, onChange: setBlocks, pdfUrl }: EditorProps) {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [activeType, setActiveType] = useState<BlockType | null>(null);
+    const [isToolboxDrag, setIsToolboxDrag] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
 
     React.useEffect(() => {
@@ -65,6 +66,7 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl }: EditorProps) {
         const activeData = active.data.current;
 
         setActiveId(active.id as string);
+        setIsToolboxDrag(!!activeData?.isToolboxItem);
 
         if (activeData?.isToolboxItem) {
             setActiveType(activeData.type);
@@ -74,6 +76,7 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl }: EditorProps) {
             if (block) setActiveType(block.type);
         }
     }
+
 
     function handleDragOver(event: DragOverEvent) {
         // Optional: useful if we had multiple droppable containers
@@ -144,6 +147,7 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl }: EditorProps) {
 
         setActiveId(null);
         setActiveType(null);
+        setIsToolboxDrag(false);
     }
 
     function handleUpdateBlock(id: string, updates: Partial<EditorBlock>) {
@@ -177,7 +181,7 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl }: EditorProps) {
 
 
                 <DragOverlay dropAnimation={dropAnimation}>
-                    {activeId ? (
+                    {activeId && isToolboxDrag ? (
                         activeType ? (
                             <div className="p-4 bg-white border border-brand-500 shadow-xl rounded-lg opacity-80 w-64 pointer-events-none">
                                 <div className="flex items-center gap-3">

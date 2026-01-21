@@ -87,27 +87,19 @@ export class DocumentsController {
 
     @Get()
     async getDocuments(@Request() req) {
-        // Fetch all documents for the company? Or user?
-        // Let's assume company-wide visibility for now or current user.
-        // For simplicity, let's fetch documents created by this user or belongs to their company.
-        // Since we didn't strictly link Document to User (only Company via Template), we might need to rely on Template ownership or just return all for simplicity in MVP.
-        // Wait, schema has companyId.
+        const userId = req.user.userId;
+        const role = req.user.role;
+        const companyId = req.user.companyId;
 
-        // Let's verify if we have access to user's companyId here.
-        // Assuming we do or can filter filter by companyId if we had it in the request user payload.
-        // The simple auth guard attaches userId. 
+        const where: any = { companyId };
 
-        // Ideally:
-        // const user = await this.prisma.user.findUnique({ where: { id: req.user.userId } });
-        // const documents = await this.prisma.document.findMany({ where: { companyId: user.companyId } });
-
-        // Optimized:
-        // We can trust that the templateId relation implies company ownership, or better, we added companyId to Document model directly.
-        // Let's modify to fetch all documents, strictly typed.
-
-        // NOTE: Since I cannot easily get companyId from req.user without DB call (unless strategy provides it), I'll do a quick fetch.
+        // RBAC: Managers only see their own documents
+        if (role === 'MANAGER') {
+            where.userId = userId;
+        }
 
         return this.prisma.document.findMany({
+            where,
             orderBy: { sentAt: 'desc' },
             include: {
                 template: {

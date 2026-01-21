@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { FileText, Plus, Loader2, X } from 'lucide-react';
+import { FileText, Plus, Loader2, X, Trash2, Eye, Pencil } from 'lucide-react';
 import { Button, Card } from '@latios/ui';
 import { TemplateRenderer } from '@/components/editor/TemplateRenderer';
 
@@ -59,11 +59,20 @@ export default function TemplatesPage() {
             });
     }, []);
 
-    const handleDelete = async (e: React.MouseEvent, id: string) => {
-        e.preventDefault(); // Prevent navigation to edit
-        e.stopPropagation();
+    // Delete State
+    const [itemToDelete, setItemToDelete] = useState<Template | null>(null);
 
-        if (!confirm('¿Estás seguro de que quieres eliminar esta plantilla?')) return;
+    // ... (useEffect remains same)
+
+    const handleDeleteClick = (e: React.MouseEvent, template: Template) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setItemToDelete(template);
+    };
+
+    const confirmDelete = async () => {
+        if (!itemToDelete) return;
+        const id = itemToDelete.id;
 
         try {
             const token = localStorage.getItem('accessToken');
@@ -77,16 +86,17 @@ export default function TemplatesPage() {
             if (!response.ok) throw new Error('Failed to delete');
 
             setTemplates((prev) => prev.filter((t) => t.id !== id));
+            setItemToDelete(null);
         } catch (error) {
             console.error(error);
         }
     };
 
     const handlePreview = async (template: Template) => {
+        // ... (existing logic)
         setSelectedTemplate(template);
         setLoadingPreview(true);
         setTemplateStructure([]);
-
         try {
             const token = localStorage.getItem('accessToken');
             const res = await fetch(`http://127.0.0.1:3001/templates/${template.id}`, {
@@ -95,7 +105,6 @@ export default function TemplatesPage() {
             if (res.ok) {
                 const fullTemplate = await res.json();
                 const s = fullTemplate.structure;
-
                 // Robust parsing logic
                 let blocks: any[] = [];
                 if (Array.isArray(s)) {
@@ -103,14 +112,9 @@ export default function TemplatesPage() {
                 } else if (s && typeof s === 'object') {
                     if (Array.isArray(s.blocks)) {
                         blocks = s.blocks;
-                    } else {
-                        // Sometimes prisma might return object with numeric keys if array logic failed? 
-                        // But usually it's { blocks: [] } from the editor save.
-                        // Or if it's '{"blocks":[]}' string
                     }
                 }
-
-                // Fallback: If s is string, parse it
+                // Fallback
                 if (!Array.isArray(blocks) || blocks.length === 0) {
                     if (typeof s === 'string') {
                         try {
@@ -120,7 +124,6 @@ export default function TemplatesPage() {
                         } catch (e) { }
                     }
                 }
-
                 setTemplateStructure(blocks || []);
             }
         } catch (error) {
@@ -141,8 +144,8 @@ export default function TemplatesPage() {
         <div className="p-8 max-w-7xl mx-auto space-y-6">
             <header className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Mis Plantillas</h2>
-                    <p className="text-gray-500">Gestiona tus plantillas de documentos reutilizables.</p>
+                    <h2 className="text-2xl font-bold text-gray-900">Plantillas</h2>
+                    <p className="text-gray-500">Administra y utiliza las plantillas disponibles para tu equipo.</p>
                 </div>
                 {canEdit && (
                     <Link href="/dashboard/templates/create">
@@ -153,6 +156,38 @@ export default function TemplatesPage() {
                     </Link>
                 )}
             </header>
+
+            {/* Delete Modal via Portal */}
+            {mounted && itemToDelete && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-6">
+                            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4 mx-auto">
+                                <Trash2 className="text-red-600" size={24} />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 text-center mb-2">¿Eliminar plantilla?</h3>
+                            <p className="text-gray-500 text-center text-sm">
+                                Estás a punto de eliminar <strong>"{itemToDelete.name}"</strong>. Esta acción no se puede deshacer.
+                            </p>
+                        </div>
+                        <div className="bg-gray-50 px-6 py-4 flex gap-3 justify-end">
+                            <button
+                                onClick={() => setItemToDelete(null)}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm"
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
 
             {/* Preview Modal via Portal */}
             {mounted && selectedTemplate && createPortal(
@@ -212,7 +247,7 @@ export default function TemplatesPage() {
                     {templates.map((template) => (
                         <Card
                             key={template.id}
-                            className="hover:shadow-md group relative cursor-pointer"
+                            className="hover:shadow-md group relative cursor-pointer h-52 flex flex-col"
                         >
                             {/* Card Content Click Handler */}
                             {canEdit ? (
@@ -221,45 +256,59 @@ export default function TemplatesPage() {
                                 <div onClick={() => handlePreview(template)} className="absolute inset-0 z-0 cursor-pointer" />
                             )}
 
-                            <div className="relative z-10 pointer-events-none">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="p-2 bg-brand-50 rounded-lg">
-                                        <FileText className="text-brand-600" size={24} />
-                                    </div>
-                                    <span className="text-xs text-gray-400">
-                                        {new Date(template.updatedAt).toLocaleDateString()}
-                                    </span>
+                            {/* Header: Icon + Edit */}
+                            <div className="relative z-10 pointer-events-none flex justify-between items-start mb-4">
+                                <div className="p-2 bg-brand-50 rounded-lg">
+                                    <FileText className="text-brand-600" size={24} />
                                 </div>
+                                {canEdit && (
+                                    <Link
+                                        href={`/dashboard/templates/${template.id}`}
+                                        className="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors pointer-events-auto"
+                                        title="Editar"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <Pencil size={18} />
+                                    </Link>
+                                )}
+                            </div>
+
+                            {/* Body */}
+                            <div className="relative z-10 pointer-events-none flex-1">
                                 <h3 className="text-lg font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">
                                     {template.name}
                                 </h3>
-                                <p className="text-sm text-gray-500 mt-2 line-clamp-2">
+                                <p className="text-xs text-gray-400 mb-1">
+                                    {new Date(template.updatedAt).toLocaleDateString()}
+                                </p>
+                                <p className="text-sm text-gray-500 line-clamp-2">
                                     {template.description || 'Sin descripción'}
                                 </p>
                             </div>
 
-                            <div className="relative z-10 mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
+                            {/* Footer: Delete + Preview */}
+                            <div className="relative z-10 pt-4 border-t border-gray-100 flex items-center justify-between">
                                 {canEdit ? (
                                     <button
-                                        onClick={(e) => handleDelete(e, template.id)}
-                                        className="text-red-500 hover:text-red-700 font-medium text-xs uppercase tracking-wide px-2 py-1 rounded hover:bg-red-50 pointer-events-auto transition-colors"
+                                        onClick={(e) => handleDeleteClick(e, template)}
+                                        className="p-1.5 -ml-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors pointer-events-auto"
+                                        title="Eliminar"
                                     >
-                                        Eliminar
+                                        <Trash2 size={18} />
                                     </button>
                                 ) : (
-                                    <span></span> // Spacer
+                                    <span></span>
                                 )}
-                                <span className="text-brand-600 font-medium hover:underline pointer-events-auto">
-                                    {canEdit ? (
-                                        <Link href={`/dashboard/templates/${template.id}`}>
-                                            Abrir
-                                        </Link>
-                                    ) : (
-                                        <button onClick={() => handlePreview(template)} className="hover:underline">
-                                            Ver
-                                        </button>
-                                    )}
-                                </span>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handlePreview(template);
+                                    }}
+                                    className="p-1.5 -mr-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors pointer-events-auto"
+                                    title="Vista Previa"
+                                >
+                                    <Eye size={18} />
+                                </button>
                             </div>
                         </Card>
                     ))}

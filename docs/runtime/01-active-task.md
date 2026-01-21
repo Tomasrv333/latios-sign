@@ -27,7 +27,9 @@
 - [x] UI Standardization (Buttons, Cards)
 
 ## Milestone 5: Advanced Template Editor (Current)
-- [x] **UX Overhaul**
+- [x] **UI/UX General Improvements**
+    - [x] Fix Header Z-Index/Overlap.
+    - [x] Refine Templates Page UX (Title, Icons, Roles, Custom Delete Modal, Layout).
     - [x] **Clean Interface**: Removed Right Sidebar, moved functionality to Header.
     - [x] **Header Polish**: Reordered icons (Delete left), improved Title Input styles (No border, visible icon).
     - [x] **Configuration Modal**: 
@@ -41,7 +43,20 @@
     - [x] **Table Tool**: Fully editable via new Settings Menu.
     - [x] **Image Tool**: Upload/Resize.
     - [x] **Separator**: Visual Divider.
-- [ ] **Rich Text**: (Deferred)
+- [x] **Rich Text & Advanced Properties**
+    - [x] Update Data Model (`styles` object).
+    - [x] Create `BlockToolbar` component (Floating).
+- [x] **Rich Text & Advanced Properties**
+    - [x] Update Data Model (`styles` object).
+    - [x] Create `BlockToolbar` component (Floating).
+    - [x] Implement Text Styling (Font, Size, Color, Weight, Italic).
+    - [x] Implement Image Styling (Border Radius, etc.).
+    - [x] Selection State Management in Canvas.
+    - [x] Refine Toolbar Position (Fix Overlap).
+    - [x] Fix Preview Styles matching.
+    - [x] Toolbar Interaction Polish (Settings Trigger, Unified Menu).
+    - [x] Remove Global Focus Borders (Visual Polish).
 - [x] **Functional Fixes**
     - [x] Drag & Drop Logic.
     - [x] Preview Modal Z-Index (Portals).
+    - [x] Fix Drag Overlay artifacts (White box on canvas drag).
