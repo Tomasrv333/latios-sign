@@ -71,6 +71,34 @@
 - **Frontend**: Editor is MVP ready.
 - **Next**: Milestone 4 - Document Sending & Signing.
 
+### Milestone 4: Document Sending & Signing (Active)
+- [x] **Backend: Document Engine** <!-- id: 50 -->
+    - [x] **Schema**: Define `Document` model (Instance of Template).
+    - [x] **API**: `DocumentsModule` (CRUD + Send + Stats).
+    - [x] **Token**: Generate secure public tokens.
+- [x] **Refactor: Separate Concerns** <!-- id: 53 -->
+    - [x] **Editor Cleanup**: Remove "Send" and "Upload PDF" from Template Editor.
+    - [x] **Dashboard**: Implement "Documentos" view for Managers.
+    - [x] **Creation Flow**: Implement `/dashboard/documents/create`.
+- [x] **Frontend: Signing Interface** <!-- id: 52 -->
+    - [x] **Public Page**: `/sign/[token]`.
+    - [x] **Canvas**: Render document in "Signing Mode".
+    - [x] **Action**: "Terminar y Firmar" (Logic implemented).
+    - [x] **Refinement**: Remove Editor grid, made text read-only.
+- [x] **Document Tracking & Dashboard**
+    - [x] Update status to `COMPLETED` on sign.
+    - [x] **Dashboard**: Real stats and recent activity.
+    - [x] **List**: Full document list view.
+    - [x] **Certificate**: Detailed "Certificate of Completion" view.
+- [x] **UI Standardization**
+    - [x] **Button**: Unified component (`rounded-lg`, `bg-brand-600`).
+    - [x] **Card**: Unified component (`rounded-xl`, `shadow-sm`).
+    - [x] Applied across Dashboard/Documents/Templates.
+
+### Next Steps (Deferred)
+- [ ] **PDF Generation**: Backend changes to generate signed PDF file.
+- [ ] **Backgrounds**: Upload PDF background support.
+
 ---
 
 ## 🧠 Context
