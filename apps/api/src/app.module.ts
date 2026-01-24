@@ -5,6 +5,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { TemplatesModule } from './modules/templates/templates.module';
+import { ProcessesModule } from './modules/processes/processes.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './modules/auth/jwt-auth.guard';
 import { TenantGuard } from './core/guards/tenant.guard';
@@ -27,6 +28,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
     AuthModule,
     UsersModule,
     TemplatesModule,
+    ProcessesModule,
     UploadsModule,
     DocumentsModule,
   ],

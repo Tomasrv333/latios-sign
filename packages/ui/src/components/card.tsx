@@ -1,15 +1,18 @@
 import React from 'react';
 
-interface CardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
     children: React.ReactNode;
     className?: string;
     title?: string;
     actions?: React.ReactNode;
 }
 
-export function Card({ children, className = '', title, actions }: CardProps) {
+export function Card({ children, className = '', title, actions, ...props }: CardProps) {
     return (
-        <div className={`bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-200 ${className}`}>
+        <div
+            className={`bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-200 ${className}`}
+            {...props}
+        >
             {(title || actions) && (
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-xl">
                     {title && <h3 className="text-gray-900 font-bold text-base">{title}</h3>}

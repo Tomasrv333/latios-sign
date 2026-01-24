@@ -18,6 +18,7 @@ model Company {
   users     User[]
   templates Template[]
   documents Document[]
+  processes Process[]
 }
 
 enum Role {
@@ -41,8 +42,52 @@ model User {
   
   documents Document[]
   
+  // Process membership (for MANAGER/MEMBER)
+  processId String?
+  process   Process? @relation(fields: [processId], references: [id])
+  
+  // Leader assignments (if user is a LEADER)
+  leaderOf  ProcessLeader[]
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// NEW: Process/Area Entity
+model Process {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+
+  // Leaders assigned to this process (M:N)
+  leaders     ProcessLeader[]
+
+  // Users (members) in this process
+  members     User[]
+
+  // Templates scoped to this process
+  templates   Template[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Join Table: Process <-> Leader (User)
+model ProcessLeader {
+  id        String   @id @default(uuid())
+  
+  processId String
+  process   Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([processId, userId])
 }
 
 model AuditLog {
@@ -56,64 +101,65 @@ model AuditLog {
   createdAt DateTime @default(now())
 }
 
- model Template {
-   id          String   @id @default(uuid())
-   name        String
-   description String?
-   structure   Json     @default("{}") // Stores the React DnD state
-   
-   isPublished Boolean  @default(false)
+model Template {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  structure   Json     @default("{}") // Stores the React DnD state
+  
+  isPublished Boolean  @default(false)
 
-   // PDF Background
-   pdfUrl      String? // Relative path to the uploaded PDF
-   pdfWidth    Int?
-   pdfHeight   Int?
-   
-   companyId   String
-   company     Company  @relation(fields: [companyId], references: [id])
-   
-   createdAt   DateTime @default(now())
-   updatedAt   DateTime @updatedAt
-   
-   documents   Document[]
- }
+  // PDF Background
+  pdfUrl      String? // Relative path to the uploaded PDF
+  pdfWidth    Int?
+  pdfHeight   Int?
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  // Scope to Process (optional for backwards compatibility)
+  processId   String?
+  process     Process? @relation(fields: [processId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  documents   Document[]
+}
 
- model Document {
-   id          String   @id @default(uuid())
-   
-   status      String   @default("DRAFT") // DRAFT, SENT, VIEWED, COMPLETED
-   
-   // Recipient Info
-   recipientEmail String
-   recipientName  String?
-   
-   // Security
-   token       String   @unique // Public access token
-   
-   // Data Snapshot (What was sent)
-   structure   Json     // Copy of template structure at send time
-   pdfUrl      String?  // Copy of PDF URL
-   
-   // Data Capture (What was filled)
-   data        Json     @default("{}") // { "block-id": "value" }
-   
-   // Relations
-   templateId  String
-   template    Template @relation(fields: [templateId], references: [id])
-   
-   companyId   String
-   company     Company  @relation(fields: [companyId], references: [id])
+model Document {
+  id          String   @id @default(uuid())
+  
+  status      String   @default("DRAFT") // DRAFT, SENT, VIEWED, COMPLETED
+  
+  // Recipient Info
+  recipientEmail String
+  recipientName  String?
+  
+  // Security
+  token       String   @unique // Public access token
+  
+  // Data Snapshot (What was sent)
+  structure   Json     // Copy of template structure at send time
+  pdfUrl      String?  // Copy of PDF URL
+  
+  // Data Capture (What was filled)
+  data        Json     @default("{}") // { "block-id": "value" }
+  
+  // Relations
+  templateId  String
+  template    Template @relation(fields: [templateId], references: [id])
+  
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
 
-   userId      String?
-   user        User?    @relation(fields: [userId], references: [id])
-   
-   sentAt      DateTime?
-   viewedAt    DateTime?
-   signedAt    DateTime?
-   
-   createdAt   DateTime @default(now())
-   updatedAt   DateTime @updatedAt
- }
-
-// Update Company to include templates relation
-
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  sentAt      DateTime?
+  viewedAt    DateTime?
+  signedAt    DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

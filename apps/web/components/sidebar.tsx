@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, FileText, FileCog, Settings, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, FileText, FileCog, Settings, LogOut, ChevronLeft, ChevronRight, Users, UserCog } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface SidebarProps {
@@ -13,8 +13,7 @@ interface SidebarProps {
 export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
-    // const [collapsed, setCollapsed] = useState(false); // Removed internal state
-    const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+    const [user, setUser] = useState<{ name: string; email: string; role?: string } | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
@@ -30,10 +29,15 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
         }
     }, []);
 
+    const isAdmin = user?.role === 'ADMIN';
+    const isAdminOrLeader = user?.role === 'ADMIN' || user?.role === 'LEADER';
+
     const menuItems = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, exact: true },
         { name: 'Documentos', href: '/dashboard/documents', icon: FileText },
         { name: 'Plantillas', href: '/dashboard/templates', icon: FileCog },
+        ...(isAdminOrLeader ? [{ name: 'Equipo', href: '/dashboard/team', icon: Users }] : []),
+        ...(isAdmin ? [{ name: 'Usuarios', href: '/dashboard/users', icon: UserCog }] : []),
         { name: 'Ajustes', href: '/dashboard/settings', icon: Settings },
     ];
 

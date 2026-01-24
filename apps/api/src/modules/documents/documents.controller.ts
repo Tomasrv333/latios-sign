@@ -57,10 +57,60 @@ export class DocumentsController {
         const role = req.user.role;
         const companyId = req.user.companyId;
 
-        // Base filter: Company + Role restriction
-        const where: any = { companyId };
-        if (role === 'MANAGER') {
-            where.userId = userId;
+        // Build where clause based on role
+        let where: any = { companyId };
+
+        if (role === 'LEADER') {
+            // Get processes where user is leader
+            const leaderProcesses = await this.prisma.processLeader.findMany({
+                where: { userId },
+                select: { processId: true }
+            });
+            const processIds = leaderProcesses.map(p => p.processId);
+
+            // Get templates from leader's processes
+            const templateIds = await this.prisma.template.findMany({
+                where: {
+                    companyId,
+                    OR: [
+                        { processId: null },
+                        { processId: { in: processIds } }
+                    ]
+                },
+                select: { id: true }
+            });
+
+            where = {
+                companyId,
+                templateId: { in: templateIds.map(t => t.id) }
+            };
+        } else if (role === 'MANAGER') {
+            // Get user's process
+            const user = await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { processId: true }
+            });
+
+            if (user?.processId) {
+                const templateIds = await this.prisma.template.findMany({
+                    where: {
+                        companyId,
+                        OR: [
+                            { processId: null },
+                            { processId: user.processId }
+                        ]
+                    },
+                    select: { id: true }
+                });
+
+                where = {
+                    companyId,
+                    templateId: { in: templateIds.map(t => t.id) },
+                    userId // Managers still only see their own documents
+                };
+            } else {
+                where.userId = userId;
+            }
         }
 
         const [total, completed, pending, templates, recent] = await Promise.all([
@@ -77,7 +127,7 @@ export class DocumentsController {
         ]);
 
         return {
-            sent: total, // Total documents created/sent
+            sent: total,
             completed,
             pending,
             templates,
@@ -91,11 +141,59 @@ export class DocumentsController {
         const role = req.user.role;
         const companyId = req.user.companyId;
 
-        const where: any = { companyId };
+        let where: any = { companyId };
 
-        // RBAC: Managers only see their own documents
-        if (role === 'MANAGER') {
-            where.userId = userId;
+        if (role === 'LEADER') {
+            // Get processes where user is leader
+            const leaderProcesses = await this.prisma.processLeader.findMany({
+                where: { userId },
+                select: { processId: true }
+            });
+            const processIds = leaderProcesses.map(p => p.processId);
+
+            // Get templates from leader's processes
+            const templateIds = await this.prisma.template.findMany({
+                where: {
+                    companyId,
+                    OR: [
+                        { processId: null },
+                        { processId: { in: processIds } }
+                    ]
+                },
+                select: { id: true }
+            });
+
+            where = {
+                companyId,
+                templateId: { in: templateIds.map(t => t.id) }
+            };
+        } else if (role === 'MANAGER') {
+            // Get user's process
+            const user = await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { processId: true }
+            });
+
+            if (user?.processId) {
+                const templateIds = await this.prisma.template.findMany({
+                    where: {
+                        companyId,
+                        OR: [
+                            { processId: null },
+                            { processId: user.processId }
+                        ]
+                    },
+                    select: { id: true }
+                });
+
+                where = {
+                    companyId,
+                    templateId: { in: templateIds.map(t => t.id) },
+                    userId // Managers still only see their own documents
+                };
+            } else {
+                where.userId = userId;
+            }
         }
 
         return this.prisma.document.findMany({
