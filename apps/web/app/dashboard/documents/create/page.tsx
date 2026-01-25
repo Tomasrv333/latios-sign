@@ -2,155 +2,290 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card } from "@latios/ui";
-import { Loader2, FileText, ChevronRight, Check } from "lucide-react";
-import { SendDocumentModal } from "@/components/templates/SendDocumentModal";
+import { ChevronRight, Check, Loader2, ChevronLeft } from "lucide-react";
+import { TeamSelector, Team } from "@/components/wizard/TeamSelector";
+import { TemplateGrid, Template } from "@/components/wizard/TemplateGrid";
+import { RecipientForm, RecipientData } from "@/components/wizard/RecipientForm";
 import { TemplateRenderer } from "@/components/editor/TemplateRenderer";
-import { EditorBlock } from "@/components/editor/Canvas";
 
-interface Template {
-    id: string;
-    name: string;
-    description: string;
-    updatedAt: string;
-    structure: { blocks: EditorBlock[] };
-    pdfUrl?: string | null;
-}
-
-export default function CreateDocumentPage() {
+export default function CreateDocumentWizard() {
     const router = useRouter();
-    const [templates, setTemplates] = useState<Template[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // Wizard State
+    const [step, setStep] = useState<1 | 2 | 3>(1);
+
+    // Selection State
+    const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
     const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-    const [step, setStep] = useState<1 | 2>(1);
-    const [isSendModalOpen, setIsSendModalOpen] = useState(false);
 
+    // Data Loading
+    const [templates, setTemplates] = useState<Template[]>([]);
+    const [loadingTemplates, setLoadingTemplates] = useState(false);
+
+    // Sending State
+    const [isSending, setIsSending] = useState(false);
+    const [successData, setSuccessData] = useState<{ url: string } | null>(null);
+
+    // Fetch templates when step 2 active (or preload)
     useEffect(() => {
-        const token = localStorage.getItem('accessToken');
-        fetch('/api/templates', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => res.json())
-            .then(data => {
-                setTemplates(data);
-                setLoading(false);
+        if (selectedTeam) {
+            setLoadingTemplates(true);
+            const token = localStorage.getItem('accessToken');
+            fetch('/api/templates', {
+                headers: { 'Authorization': `Bearer ${token}` }
             })
-            .catch(err => {
-                console.error(err);
-                setLoading(false);
-            });
-    }, []);
+                .then(res => res.json())
+                .then(data => {
+                    setTemplates(data || []);
+                    setLoadingTemplates(false);
+                })
+                .catch(err => {
+                    console.error("Error loading templates", err);
+                    setLoadingTemplates(false);
+                });
+        }
+    }, [selectedTeam]);
 
-    if (loading) {
+    const handleTeamSelect = (team: Team) => {
+        setSelectedTeam(team);
+        setStep(2);
+    };
+
+    const handleTemplateSelect = (template: Template) => {
+        setSelectedTemplate(template);
+        setStep(3);
+    };
+
+    const handleSendDocument = async (data: RecipientData) => {
+        if (!selectedTemplate) return;
+
+        setIsSending(true);
+        try {
+            const token = localStorage.getItem('accessToken');
+            const res = await fetch('/api/documents', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    templateId: selectedTemplate.id,
+                    recipientEmail: data.email,
+                    recipientName: data.name,
+                })
+            });
+
+            if (!res.ok) throw new Error('Failed to send');
+
+            const responseData = await res.json();
+            setSuccessData({ url: `${window.location.origin}${responseData.publicUrl}` });
+
+        } catch (error) {
+            console.error(error);
+            alert('Error al enviar el documento');
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    const canGoNext = () => {
+        if (step === 1) return !!selectedTeam;
+        if (step === 2) return !!selectedTemplate;
+        return false;
+    };
+
+    const goNext = () => {
+        if (canGoNext()) setStep(prev => Math.min(prev + 1, 3) as 1 | 2 | 3);
+    };
+
+    const goBack = () => {
+        setStep(prev => Math.max(prev - 1, 1) as 1 | 2 | 3);
+    };
+
+    // Render Success View
+    if (successData) {
         return (
-            <div className="h-64 flex items-center justify-center">
-                <Loader2 className="animate-spin text-brand-600" size={32} />
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+                <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center space-y-6 animate-in zoom-in-95 duration-300">
+                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+                        <Check size={40} strokeWidth={3} />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900">¡Documento Enviado!</h2>
+                        <p className="text-gray-500 mt-2">El destinatario ha recibido la notificación correctamente.</p>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-500 break-all border border-gray-200">
+                        {successData.url}
+                    </div>
+
+                    <button
+                        onClick={() => router.push('/dashboard/documents')}
+                        className="w-full py-3 bg-brand-600 text-white font-medium rounded-xl hover:bg-brand-700 transition-colors"
+                    >
+                        Volver a Documentos
+                    </button>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="p-8 max-w-7xl mx-auto min-h-screen">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto min-h-screen font-sans">
+            {/* Header / Breadcrumb */}
             <header className="mb-8">
                 <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                     <span className="cursor-pointer hover:text-brand-600" onClick={() => router.push('/dashboard/documents')}>Documentos</span>
                     <ChevronRight size={14} />
-                    <span className="font-medium text-gray-900">Nuevo Documento</span>
+                    <span className="font-medium text-gray-900">Nuevo Envío</span>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900">Crear Nuevo Documento</h1>
-                <p className="text-gray-500 mt-2">Sigue los pasos para enviar un documento a firmar.</p>
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Enviar Documento</h1>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column: Steps & Selection */}
-                <div className="lg:col-span-1 space-y-6">
-                    {/* Stepper */}
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${step >= 1 ? 'border-brand-600 bg-brand-50 text-brand-600' : 'border-gray-300 text-gray-400'} font-bold`}>1</div>
-                        <div className="flex-1 h-0.5 bg-gray-200"></div>
-                        <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${step >= 2 ? 'border-brand-600 bg-brand-50 text-brand-600' : 'border-gray-300 text-gray-400'} font-bold`}>2</div>
-                    </div>
+            {/* Stepper (Compact & Modern with Arrows) */}
+            <div className="mb-10">
+                <div className="flex items-center justify-center w-full gap-4">
+                    {/* Back Arrow */}
+                    <button
+                        onClick={goBack}
+                        disabled={step === 1}
+                        className={`p-2 rounded-full transition-all ${step > 1
+                                ? 'text-gray-500 hover:bg-gray-100 hover:text-brand-600 cursor-pointer'
+                                : 'text-gray-200 cursor-default opacity-0'
+                            }`}
+                        title="Anterior"
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
 
-                    <div className="space-y-4">
-                        <h3 className="font-semibold text-gray-900">Selecciona una Plantilla</h3>
-                        <div className="space-y-3">
-                            {templates.map((template) => (
-                                <div
-                                    key={template.id}
-                                    onClick={() => {
-                                        setSelectedTemplate(template);
-                                        setStep(2); // Auto advance to preview on mobile or just selection
-                                    }}
-                                    className={`p-4 rounded-lg border cursor-pointer transition-all ${selectedTemplate?.id === template.id
-                                        ? 'border-brand-500 bg-brand-50 shadow-sm ring-1 ring-brand-500'
-                                        : 'border-gray-200 hover:border-brand-300 hover:bg-gray-50'
-                                        }`}
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <div className={`p-2 rounded-md ${selectedTemplate?.id === template.id ? 'bg-brand-100 text-brand-600' : 'bg-gray-100 text-gray-500'}`}>
-                                            <FileText size={20} />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-medium text-gray-900">{template.name}</h4>
-                                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">{template.description || 'Sin descripción'}</p>
-                                        </div>
-                                        {selectedTemplate?.id === template.id && (
-                                            <div className="ml-auto text-brand-600">
-                                                <Check size={18} />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                            {templates.length === 0 && (
-                                <p className="text-gray-500 text-sm italic">No hay plantillas disponibles.</p>
-                            )}
+                    <div className="flex items-center w-full max-w-lg">
+                        {/* Step 1 */}
+                        <div className="relative flex flex-col items-center group cursor-pointer" onClick={() => step > 1 && setStep(1)}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 z-10 ${step >= 1
+                                    ? 'bg-brand-600 text-white shadow-md ring-2 ring-brand-100'
+                                    : 'bg-white border-2 border-gray-300 text-gray-400'
+                                }`}>
+                                {step > 1 ? <Check size={14} strokeWidth={3} /> : '1'}
+                            </div>
+                            <span className={`absolute -bottom-7 whitespace-nowrap text-xs font-semibold tracking-wide transition-colors ${step >= 1 ? 'text-brand-700' : 'text-gray-400'
+                                }`}>
+                                Equipo
+                            </span>
+                        </div>
+
+                        {/* Connector 1-2 */}
+                        <div className="flex-1 h-[2px] mx-3 relative bg-gray-100">
+                            <div
+                                className="absolute top-0 left-0 h-full bg-brand-600 transition-all duration-500 ease-out"
+                                style={{ width: step >= 2 ? '100%' : '0%' }}
+                            ></div>
+                        </div>
+
+                        {/* Step 2 */}
+                        <div className="relative flex flex-col items-center group cursor-pointer" onClick={() => step > 2 && setStep(2)}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 z-10 ${step >= 2
+                                    ? 'bg-brand-600 text-white shadow-md ring-2 ring-brand-100'
+                                    : 'bg-white border-2 border-gray-300 text-gray-400'
+                                }`}>
+                                {step > 2 ? <Check size={14} strokeWidth={3} /> : '2'}
+                            </div>
+                            <span className={`absolute -bottom-7 whitespace-nowrap text-xs font-semibold tracking-wide transition-colors ${step >= 2 ? 'text-brand-700' : 'text-gray-400'
+                                }`}>
+                                Plantilla
+                            </span>
+                        </div>
+
+                        {/* Connector 2-3 */}
+                        <div className="flex-1 h-[2px] mx-3 relative bg-gray-100">
+                            <div
+                                className="absolute top-0 left-0 h-full bg-brand-600 transition-all duration-500 ease-out"
+                                style={{ width: step >= 3 ? '100%' : '0%' }}
+                            ></div>
+                        </div>
+
+                        {/* Step 3 */}
+                        <div className="relative flex flex-col items-center">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 z-10 ${step >= 3
+                                    ? 'bg-brand-600 text-white shadow-md ring-2 ring-brand-100'
+                                    : 'bg-white border-2 border-gray-300 text-gray-400'
+                                }`}>
+                                3
+                            </div>
+                            <span className={`absolute -bottom-7 whitespace-nowrap text-xs font-semibold tracking-wide transition-colors ${step >= 3 ? 'text-brand-700' : 'text-gray-400'
+                                }`}>
+                                Envío
+                            </span>
                         </div>
                     </div>
-                </div>
 
-                {/* Right Column: Preview & Action */}
-                <div className="lg:col-span-2">
-                    {selectedTemplate ? (
-                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-[800px]">
-                            <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                                <h3 className="font-medium text-gray-700">Vista Previa: {selectedTemplate.name}</h3>
-                                <button
-                                    onClick={() => setIsSendModalOpen(true)}
-                                    className="px-6 py-2 bg-brand-600 text-white rounded-md text-sm font-medium hover:bg-brand-700 shadow-sm transition-colors"
-                                >
-                                    Continuar y Enviar
-                                </button>
+                    {/* Forward Arrow */}
+                    <button
+                        onClick={goNext}
+                        disabled={!canGoNext() || step === 3}
+                        className={`p-2 rounded-full transition-all ${canGoNext() && step < 3
+                                ? 'text-gray-500 hover:bg-gray-100 hover:text-brand-600 cursor-pointer'
+                                : 'text-gray-200 cursor-default opacity-0'
+                            }`}
+                        title="Siguiente"
+                    >
+                        <ChevronRight size={24} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Wizard Content */}
+            <div className="min-h-[400px]">
+                {step === 1 && (
+                    <TeamSelector
+                        selectedTeamId={selectedTeam?.id || null}
+                        onSelect={handleTeamSelect}
+                    />
+                )}
+
+                {step === 2 && (
+                    <>
+                        {loadingTemplates ? (
+                            <div className="h-64 flex items-center justify-center">
+                                <Loader2 className="animate-spin text-brand-600" size={32} />
                             </div>
-                            <div className="flex-1 overflow-y-auto bg-gray-100 p-8 flex justify-center">
-                                <div className="scale-75 origin-top">
-                                    {/* We need to handle PDF Background in Renderer too if present */}
-                                    <div className="relative" style={{ width: '210mm', minHeight: '297mm' }}>
-                                        {/* If we had PDF support in renderer, checking... template renderer only renders blocks currently. */}
-                                        {/* We'll just render blocks for now. The future renderer should support caching specific PDF page images. */}
+                        ) : (
+                            <TemplateGrid
+                                teamId={selectedTeam!.id}
+                                selectedTemplateId={selectedTemplate?.id || null}
+                                onSelect={handleTemplateSelect}
+                                templates={templates}
+                            />
+                        )}
+                    </>
+                )}
+
+                {step === 3 && selectedTemplate && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {/* Form Column */}
+                        <div className="space-y-4">
+                            <RecipientForm
+                                templateName={selectedTemplate.name}
+                                onSubmit={handleSendDocument}
+                                loading={isSending}
+                            />
+                        </div>
+
+                        {/* Preview Column */}
+                        <div className="bg-gray-100 rounded-xl border border-gray-200 overflow-hidden flex flex-col h-[700px] shadow-inner">
+                            <div className="p-3 bg-white border-b border-gray-200 text-center font-medium text-gray-600 text-xs uppercase tracking-wide">
+                                Vista Previa del Documento
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-8 flex justify-center custom-scrollbar">
+                                <div className="scale-[0.65] origin-top shadow-xl">
+                                    <div className="bg-white" style={{ width: '210mm', minHeight: '297mm' }}>
                                         <TemplateRenderer blocks={selectedTemplate.structure.blocks || []} />
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    ) : (
-                        <div className="h-full border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center bg-gray-50 text-gray-400">
-                            <div className="text-center">
-                                <FileText size={48} className="mx-auto mb-4 opacity-20" />
-                                <p>Selecciona una plantilla para visualizarla</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
-
-            {selectedTemplate && (
-                <SendDocumentModal
-                    isOpen={isSendModalOpen}
-                    onClose={() => setIsSendModalOpen(false)}
-                    templateId={selectedTemplate.id}
-                />
-            )}
         </div>
     );
 }
