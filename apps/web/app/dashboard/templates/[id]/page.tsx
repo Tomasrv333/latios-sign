@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Editor } from "@/components/editor/Editor";
 import { EditorBlock } from "@/components/editor/Canvas";
 import { TemplateRenderer } from "@/components/editor/TemplateRenderer";
 import { useRouter, useParams } from "next/navigation";
 import { createPortal } from "react-dom";
 import { Loader2, Pencil, Eye, Save, ArrowLeft, Trash2, Settings } from "lucide-react";
-
+import { useNavigationGuard } from "@/hooks/useNavigationGuard";
 import { ConfigurationPanel } from "@/components/editor/ConfigurationPanel";
 // import { Input } from "@/components/ui/Input"; // Will use in ConfigPanel refactor
 
@@ -15,6 +15,12 @@ export default function EditTemplatePage() {
     const params = useParams();
     const id = params.id as string;
     const router = useRouter();
+
+    // Navigation Guard
+    const { setIsDirty, isDirty, setShowExitModal, setPendingNavigation } = useNavigationGuard();
+    const initialLoadRef = useRef(true);
+    const initialBlocksRef = useRef<EditorBlock[]>([]);
+    const initialNameRef = useRef("");
 
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
@@ -29,12 +35,42 @@ export default function EditTemplatePage() {
 
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
-    // New Settings State
     const [settings, setSettings] = useState({
         signatureType: 'draw' as 'draw' | 'otp',
         requireId: false,
-        companyName: ''
+        companyName: '',
+        description: '', // Init default
+        processId: ''
     });
+
+    // Track dirty state by comparing with initial values
+    useEffect(() => {
+        if (initialLoadRef.current) return; // Skip during initial load
+
+        const hasBlockChanges = JSON.stringify(blocks) !== JSON.stringify(initialBlocksRef.current);
+        const hasNameChange = name !== initialNameRef.current;
+        const dirty = hasBlockChanges || hasNameChange;
+        setIsDirty(dirty);
+    }, [blocks, name, setIsDirty]);
+
+    // Clean up dirty state on unmount
+    useEffect(() => {
+        return () => {
+            setIsDirty(false);
+        };
+    }, [setIsDirty]);
+
+    // Browser refresh/close guard
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (!isDirty) return;
+            e.preventDefault();
+            e.returnValue = '';
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isDirty]);
 
     useEffect(() => {
         if (!id) return;
@@ -51,17 +87,39 @@ export default function EditTemplatePage() {
             })
             .then((data) => {
                 setName(data.name);
+                // Load description into settings for the panel
+                const initialSettings = {
+                    signatureType: 'draw' as 'draw' | 'otp',
+                    requireId: false,
+                    companyName: '',
+                    description: data.description || '', // Load description
+                    processId: data.processId || ''
+                };
+
                 // Load structure
+                let loadedBlocks: EditorBlock[] = [];
                 if (data.structure) {
                     if (Array.isArray(data.structure.blocks)) {
-                        setBlocks(data.structure.blocks);
+                        loadedBlocks = data.structure.blocks;
+                        setBlocks(loadedBlocks);
                     }
                     if (data.structure.settings) {
-                        setSettings(data.structure.settings);
+                        Object.assign(initialSettings, data.structure.settings);
+                        if (!initialSettings.description) initialSettings.description = data.description || '';
                     }
                 } else {
                     setBlocks([]);
                 }
+                setSettings(initialSettings);
+
+                // Store initial values for dirty detection
+                initialBlocksRef.current = loadedBlocks;
+                initialNameRef.current = data.name;
+
+                // Mark initial load complete (after a tick to let state settle)
+                setTimeout(() => {
+                    initialLoadRef.current = false;
+                }, 100);
 
                 // Load PDF URL
                 if (data.pdfUrl) {
@@ -90,10 +148,11 @@ export default function EditTemplatePage() {
                 },
                 body: JSON.stringify({
                     name,
-                    description: `Template with ${blocks.length} blocks`,
+                    description: settings.description?.trim() || undefined, // Use description from settings
+                    processId: settings.processId || undefined,
                     structure: {
                         blocks,
-                        settings // Persist settings
+                        settings // Persist settings (including description copy for safety)
                     },
                     pdfUrl: pdfUrl, // Keep existing PDF URL if any
                 }),
@@ -214,7 +273,9 @@ export default function EditTemplatePage() {
                 blocks={blocks}
                 onChange={setBlocks}
                 pdfUrl={pdfUrl}
-            // Sidebar removed
+                settings={settings}
+                onSettingsChange={setSettings}
+            // Sidebar removed (Now internal)
             />
 
             {/* Config Modal */}

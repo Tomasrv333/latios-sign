@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import {
     DndContext,
     DragOverlay,
-    closestCorners,
     pointerWithin,
     KeyboardSensor,
     PointerSensor,
@@ -21,6 +20,8 @@ import {
 } from '@dnd-kit/sortable';
 import { Toolbox, BlockType } from './Toolbox';
 import { Canvas, EditorBlock } from './Canvas';
+import { EditorToolbar } from './EditorToolbar';
+import { PagesManager } from './PagesManager';
 import { Type, Calendar, PenTool } from 'lucide-react';
 import { snapToGridModifier } from './modifiers';
 
@@ -38,13 +39,20 @@ interface EditorProps {
     blocks: EditorBlock[];
     onChange: React.Dispatch<React.SetStateAction<EditorBlock[]>>;
     pdfUrl?: string | null;
+    settings?: any; // Received from parent for Toolbar usage
+    onSettingsChange?: (newSettings: any) => void;
 }
 
-export function Editor({ blocks, onChange: setBlocks, pdfUrl }: EditorProps) {
+export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettingsChange }: EditorProps) {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [activeType, setActiveType] = useState<BlockType | null>(null);
     const [isToolboxDrag, setIsToolboxDrag] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+
+    // Sidebar State
+    const [activeTab, setActiveTab] = useState<'tools' | 'pages' | null>('pages'); // Default to Pages as key view
+    const [numPages, setNumPages] = useState(1);
+    const [focusPage, setFocusPage] = useState<number | null>(null); // For navigating to a specific page
 
     React.useEffect(() => {
         setIsMounted(true);
@@ -92,24 +100,52 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl }: EditorProps) {
             return;
         }
 
-        // Determine if dropped within canvas (either directly on canvas or on a block inside it)
-        const isOverCanvas = over.id === 'canvas';
+        // Check if dropped on a specific page
+        const isOverPage = over.id.toString().startsWith('canvas-page-');
         const isOverBlock = blocks.some(b => b.id === over.id);
 
-        if (isOverCanvas || isOverBlock) {
-            const canvasElement = document.getElementById('canvas-area');
+        // Extract page number if dropped on page background, else defaults to... 1? or find block page?
+        let targetPage = 1;
+
+        if (isOverPage) {
+            targetPage = parseInt(over.id.toString().replace('canvas-page-', ''));
+        } else if (isOverBlock) {
+            const targetBlock = blocks.find(b => b.id === over.id);
+            if (targetBlock) targetPage = targetBlock.page;
+        }
+
+        if (isOverPage || isOverBlock) {
+            // Needed to calculate relative coordinates if we want precision, 
+            // but for dropping *new* items, we can just center/default or calculate.
+            // Getting relative coords on dropped page is tricky without the page element ref.
+            // Just default to a safe pos for now, or use event.delta/translated rect.
+
+            const canvasElement = document.getElementById(`canvas-wrapper`); // Use wrapper logic if possible, or simple drop.
+
+            // Simplified positioning:
+            // Since we know the 'active.rect', we can try to find position.
+            // But 'over.rect' is the page rect.
+
             let x = 0;
             let y = 0;
 
-            if (canvasElement && active.rect.current?.translated) {
-                const canvasRect = canvasElement.getBoundingClientRect();
+            if (over.rect) {
+                // Approximate relative position
+                // Note: 'translated' gives the final position of the DragOverlay item.
+                // We compare it to the page (over) rect.
                 const dropRect = active.rect.current.translated;
+                if (dropRect) {
+                    x = dropRect.left - over.rect.left;
+                    y = dropRect.top - over.rect.top;
 
-                x = dropRect.left - canvasRect.left;
-                y = dropRect.top - canvasRect.top;
+                    // Adjust for Zoom? 
+                    // The passed 'x/y' to blocks are usually CSS pixels.
+                    // If Zoom is applied via Transform, we might need to query the zoom level or assume 1 during drag calculations?
+                    // Let's assume 1 for now or ignore advanced zoom calc until tested.
 
-                x = Math.max(0, x);
-                y = Math.max(0, y);
+                    x = Math.max(0, x);
+                    y = Math.max(0, y);
+                }
             }
 
             if (active.data.current?.isToolboxItem) {
@@ -120,7 +156,8 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl }: EditorProps) {
                     content: '',
                     x,
                     y,
-                    w: 300
+                    // No fixed w/h - blocks will auto-size to content
+                    page: targetPage // Assign to specific page
                 };
                 setBlocks((items) => [...items, newBlock]);
             } else {
@@ -133,10 +170,33 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl }: EditorProps) {
                             const snappedX = Math.round(newX / 20) * 20;
                             const snappedY = Math.round(newY / 20) * 20;
 
+                            // If we dragged to a new page, updating 'x,y' based on delta might be weird
+                            // because delta is global delta.
+                            // Ideally we just update coords. 
+                            // *Complexity*: Dragging between pages requires re-calculating (x,y) relative to NEW page.
+                            // For V1, let's keep it simple: Dragging updates X/Y safely.
+                            // If we cross pages, we might need to detect 'over' change and update 'page' prop.
+
+                            let newPage = b.page;
+                            let finalX = Math.max(0, snappedX);
+                            let finalY = Math.max(0, snappedY);
+
+                            if (isOverPage && targetPage !== b.page) {
+                                newPage = targetPage;
+                                // Reset X/Y relative to new page top-left?
+                                // event.delta is cumulative. 
+                                // Proper way: (DropRect - NewPageRect)
+                                if (active.rect.current.translated && over.rect) {
+                                    finalX = active.rect.current.translated.left - over.rect.left;
+                                    finalY = active.rect.current.translated.top - over.rect.top;
+                                }
+                            }
+
                             return {
                                 ...b,
-                                x: Math.max(0, snappedX),
-                                y: Math.max(0, snappedY)
+                                x: Math.max(0, finalX),
+                                y: Math.max(0, finalY),
+                                page: newPage
                             };
                         }
                         return b;
@@ -150,6 +210,7 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl }: EditorProps) {
         setIsToolboxDrag(false);
     }
 
+
     function handleUpdateBlock(id: string, updates: Partial<EditorBlock>) {
         setBlocks((items) => items.map(b => b.id === id ? { ...b, ...updates } : b));
     }
@@ -158,43 +219,132 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl }: EditorProps) {
         setBlocks((items) => items.filter((b) => b.id !== id));
     }
 
+    // Page Management Logic
+    const handleAddPage = () => setNumPages(n => n + 1);
+
+    const handleDeletePage = (pageIndex: number) => {
+        if (numPages <= 1) return;
+
+        // Remove blocks on this page
+        setBlocks(prev => prev.filter(b => b.page !== pageIndex));
+
+        // Shift blocks on subsequent pages down (pageIndex + 1 becomes pageIndex)
+        setBlocks(prev => prev.map(b => {
+            if (b.page > pageIndex) {
+                return { ...b, page: b.page - 1 };
+            }
+            return b;
+        }));
+
+        setNumPages(n => n - 1);
+    };
+
+    const handleMovePage = (fromIndex: number, toIndex: number) => {
+        if (toIndex < 1 || toIndex > numPages || fromIndex === toIndex) return;
+
+        // Swap logic:
+        // Blocks on 'fromIndex' -> become 'toIndex'
+        // Blocks on 'toIndex' -> become 'fromIndex'
+
+        setBlocks(prev => prev.map(b => {
+            if (b.page === fromIndex) return { ...b, page: toIndex };
+            if (b.page === toIndex) return { ...b, page: fromIndex };
+            return b;
+        }));
+
+        // No change to numPages
+    };
+
+    // Sidebar Toggle Logic
+    const handleTabChange = (tab: 'tools' | 'pages') => {
+        if (activeTab === tab) {
+            setActiveTab(null); // Close if clicking same
+        } else {
+            setActiveTab(tab);
+        }
+    };
+
     if (!isMounted) return null;
 
     return (
-        <div className="flex h-[calc(100vh-64px)] overflow-hidden w-full">
-            <DndContext
-                sensors={sensors}
-                collisionDetection={pointerWithin}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDragEnd={handleDragEnd}
-                modifiers={[snapToGridModifier]}
-            >
-                <Toolbox />
-                <Canvas
-                    blocks={blocks}
-                    onDeleteBlock={handleDeleteBlock}
-                    onUpdateBlock={handleUpdateBlock}
-                    pdfUrl={pdfUrl}
-                />
+        <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden w-full bg-gray-50">
+            {/* Toolbar */}
+            <EditorToolbar
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                signatureType={settings?.signatureType || 'draw'}
+                onSignatureTypeChange={(type) => {
+                    if (onSettingsChange) {
+                        onSettingsChange({ ...settings, signatureType: type })
+                    }
+                }}
+                processId={settings?.processId}
+                onProcessChange={(id) => {
+                    if (onSettingsChange) {
+                        onSettingsChange({ ...settings, processId: id })
+                    }
+                }}
+            />
+
+            <div className="flex flex-1 overflow-hidden relative">
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={pointerWithin}
+                    onDragStart={handleDragStart}
+                    onDragOver={handleDragOver}
+                    onDragEnd={handleDragEnd}
+                    modifiers={[snapToGridModifier]}
+                >
+                    {/* Collapsible Sidebar */}
+                    <div
+                        className={`border-r border-gray-200 bg-white transition-all duration-300 ease-in-out ${activeTab ? 'w-64 translate-x-0' : 'w-0 -translate-x-full opacity-0 overflow-hidden'
+                            }`}
+                    >
+                        <div className="w-64 h-full">
+                            {activeTab === 'tools' && <Toolbox />}
+                            {activeTab === 'pages' && (
+                                <PagesManager
+                                    blocks={blocks}
+                                    numPages={numPages}
+                                    onAddPage={handleAddPage}
+                                    onDeletePage={handleDeletePage}
+                                    onMovePage={handleMovePage}
+                                    onPageClick={(pageNumber) => {
+                                        setFocusPage(pageNumber);
+                                    }}
+                                />
+                            )}
+                        </div>
+                    </div>
+
+                    <Canvas
+                        blocks={blocks}
+                        onDeleteBlock={handleDeleteBlock}
+                        onUpdateBlock={handleUpdateBlock}
+                        pdfUrl={pdfUrl}
+                        numPages={numPages}
+                        onAddPage={handleAddPage}
+                        focusPage={focusPage}
+                        onFocusPageHandled={() => setFocusPage(null)}
+                    />
 
 
-
-                <DragOverlay dropAnimation={dropAnimation}>
-                    {activeId && isToolboxDrag ? (
-                        activeType ? (
-                            <div className="p-4 bg-white border border-brand-500 shadow-xl rounded-lg opacity-80 w-64 pointer-events-none">
-                                <div className="flex items-center gap-3">
-                                    {activeType === 'text' && <Type />}
-                                    {activeType === 'date' && <Calendar />}
-                                    {activeType === 'signature' && <PenTool />}
-                                    <span className="font-medium capitalize">{activeType}</span>
+                    <DragOverlay dropAnimation={dropAnimation}>
+                        {activeId && isToolboxDrag ? (
+                            activeType ? (
+                                <div className="p-4 bg-white border border-brand-500 shadow-xl rounded-lg opacity-80 w-64 pointer-events-none">
+                                    <div className="flex items-center gap-3">
+                                        {activeType === 'text' && <Type />}
+                                        {activeType === 'date' && <Calendar />}
+                                        {activeType === 'signature' && <PenTool />}
+                                        <span className="font-medium capitalize">{activeType}</span>
+                                    </div>
                                 </div>
-                            </div>
-                        ) : null
-                    ) : null}
-                </DragOverlay>
-            </DndContext>
+                            ) : null
+                        ) : null}
+                    </DragOverlay>
+                </DndContext>
+            </div>
         </div>
     );
 }

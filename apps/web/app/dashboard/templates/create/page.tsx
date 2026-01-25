@@ -1,15 +1,45 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Editor } from "@/components/editor/Editor";
 import { EditorBlock } from "@/components/editor/Canvas";
 import { useRouter } from "next/navigation";
+import { useNavigationGuard } from "@/hooks/useNavigationGuard";
 
 export default function CreateTemplatePage() {
     const [blocks, setBlocks] = useState<EditorBlock[]>([]);
     const [name, setName] = useState("Nueva Plantilla");
+    const [description, setDescription] = useState("");
+    const [settings, setSettings] = useState({ signatureType: 'draw', processId: '' });
     const [isSaving, setIsSaving] = useState(false);
+
     const router = useRouter();
+    const { setIsDirty, isDirty, setShowExitModal, setPendingNavigation } = useNavigationGuard();
+
+    // Update dirty state in context whenever local state changes
+    useEffect(() => {
+        const dirty = blocks.length > 0 || name !== "Nueva Plantilla" || description !== "";
+        setIsDirty(dirty);
+    }, [blocks, name, description, settings, setIsDirty]);
+
+    // Clean up dirty state when component unmounts
+    useEffect(() => {
+        return () => {
+            setIsDirty(false);
+        };
+    }, [setIsDirty]);
+
+    // Browser refresh/close guard
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (!isDirty) return;
+            e.preventDefault();
+            e.returnValue = '';
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isDirty]);
 
     const handleSave = async () => {
         if (!name.trim()) return alert("Por favor ingresa un nombre para la plantilla");
@@ -17,7 +47,6 @@ export default function CreateTemplatePage() {
 
         try {
             setIsSaving(true);
-            // Direct connection to Backend to bypass Proxy issues
             const token = localStorage.getItem('accessToken');
             const response = await fetch('http://127.0.0.1:3001/templates', {
                 method: 'POST',
@@ -27,8 +56,10 @@ export default function CreateTemplatePage() {
                 },
                 body: JSON.stringify({
                     name,
-                    description: `Template with ${blocks.length} blocks`,
-                    structure: { blocks }, // Wrapping in an object to future proof
+                    description: description.trim() || undefined,
+                    structure: { blocks },
+                    processId: settings.processId || undefined,
+                    signatureType: settings.signatureType,
                 }),
             });
 
@@ -36,14 +67,22 @@ export default function CreateTemplatePage() {
                 throw new Error('Failed to save template');
             }
 
-            const data = await response.json();
-            // User requested no alerts. Just redirect.
+            setIsDirty(false);
             router.push('/dashboard/templates');
         } catch (error) {
             console.error(error);
-            // alert('Error al guardar la plantilla'); // Removed as requested
+            alert('Error al guardar la plantilla');
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleCancel = () => {
+        if (isDirty) {
+            setPendingNavigation(null);
+            setShowExitModal(true);
+        } else {
+            router.back();
         }
     };
 
@@ -58,10 +97,17 @@ export default function CreateTemplatePage() {
                         className="text-lg font-semibold text-gray-800 border-none hover:bg-gray-50 focus:bg-gray-50 focus:ring-0 rounded px-2"
                         placeholder="Nombre de la Plantilla"
                     />
+                    <input
+                        type="text"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="text-sm text-gray-500 border-none hover:bg-gray-50 focus:bg-gray-50 focus:ring-0 rounded px-2 w-96 placeholder-gray-400"
+                        placeholder="Descripción corta (opcional)"
+                    />
                 </div>
                 <div className="flex gap-3">
                     <button
-                        onClick={() => router.back()}
+                        onClick={handleCancel}
                         className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
                     >
                         Cancelar
@@ -75,7 +121,12 @@ export default function CreateTemplatePage() {
                     </button>
                 </div>
             </div>
-            <Editor blocks={blocks} onChange={setBlocks} />
+            <Editor
+                blocks={blocks}
+                onChange={setBlocks}
+                settings={settings}
+                onSettingsChange={setSettings as any}
+            />
         </div>
     );
 }
