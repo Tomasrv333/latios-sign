@@ -2,6 +2,8 @@
 
 import React, { useRef } from 'react';
 import { EditorBlock } from '../editor/Canvas';
+import { TableBlock } from '../editor/blocks/TableBlock';
+import { ImageBlock } from '../editor/blocks/ImageBlock';
 import dynamic from 'next/dynamic';
 import ReactSignatureCanvas from 'react-signature-canvas';
 import { X } from 'lucide-react';
@@ -84,6 +86,14 @@ function renderBlockContent(block: EditorBlock, value: string, onChange: (val: s
 
     if (block.type === 'signature') {
         return <SignatureInput value={value} onChange={onChange} />;
+    }
+
+    if (block.type === 'table') {
+        return <TableBlock content={block.content} onChange={() => { }} readOnly />;
+    }
+
+    if (block.type === 'image') {
+        return <ImageBlock content={block.content} onChange={() => { }} readOnly style={block.style} />;
     }
 
     return null;

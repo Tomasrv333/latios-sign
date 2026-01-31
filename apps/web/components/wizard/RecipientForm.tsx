@@ -34,7 +34,10 @@ export function RecipientForm({ templateName, onSubmit, loading, variables = [] 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit({ ...formData, isMassive: mode === 'massive', variableValues });
+        const { _delegate, ...cleanValues } = variableValues;
+        // If delegating, send empty values (or handle as needed by API to indicate delegation)
+        // For now, sending cleanValues. If _delegate was true, cleanValues might be empty => placeholders remain.
+        onSubmit({ ...formData, isMassive: mode === 'massive', variableValues: _delegate === 'true' ? {} : cleanValues });
     };
 
     return (
@@ -122,29 +125,60 @@ export function RecipientForm({ templateName, onSubmit, loading, variables = [] 
 
                         {variables.length > 0 && (
                             <div className="border-t border-gray-100 pt-5 space-y-4">
-                                <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 bg-brand-500 rounded-full"></span>
-                                    Variables del Documento
-                                </h3>
-                                <p className="text-xs text-gray-500">
-                                    Esta plantilla contiene variables. Puedes llenarlas ahora o dejar que el destinatario las complete (si aplica).
-                                </p>
-                                <div className="grid grid-cols-1 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                                    {variables.map(variable => (
-                                        <div key={variable}>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1 capitalize">
-                                                {variable.replace(/_/g, ' ')}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={variableValues[variable] || ''}
-                                                onChange={(e) => setVariableValues(prev => ({ ...prev, [variable]: e.target.value }))}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm"
-                                                placeholder={`Valor para ${variable}`}
-                                            />
-                                        </div>
-                                    ))}
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 bg-brand-500 rounded-full"></span>
+                                        Variables del Documento
+                                    </h3>
+                                    {/* Delegation Toggle */}
+                                    <div className="flex bg-gray-100 p-0.5 rounded-lg">
+                                        <button
+                                            type="button"
+                                            onClick={() => setVariableValues(prev => ({ ...prev, _delegate: 'false' }))}
+                                            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${variableValues._delegate !== 'true'
+                                                ? 'bg-white text-gray-900 shadow-sm'
+                                                : 'text-gray-500 hover:text-gray-700'
+                                                }`}
+                                        >
+                                            Llenar Ahora
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setVariableValues(prev => ({ ...prev, _delegate: 'true' }))}
+                                            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${variableValues._delegate === 'true'
+                                                ? 'bg-white text-gray-900 shadow-sm'
+                                                : 'text-gray-500 hover:text-gray-700'
+                                                }`}
+                                        >
+                                            Solicitar al Firmante
+                                        </button>
+                                    </div>
                                 </div>
+
+                                <p className="text-xs text-gray-500">
+                                    {variableValues._delegate === 'true'
+                                        ? "El destinatario deberá completar estos campos antes de firmar."
+                                        : "Completa los valores ahora. Se reemplazarán en el documento final."}
+                                </p>
+
+                                {variableValues._delegate !== 'true' && (
+                                    <div className="grid grid-cols-1 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100 animate-in fade-in">
+                                        {variables.map(variable => (
+                                            <div key={variable}>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1 capitalize">
+                                                    {variable.replace(/_/g, ' ')}
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={variableValues[variable] || ''}
+                                                    onChange={(e) => setVariableValues(prev => ({ ...prev, [variable]: e.target.value }))}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm"
+                                                    placeholder={`Valor para ${variable}`}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
 
