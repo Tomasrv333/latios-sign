@@ -8,9 +8,11 @@ import { useEffect, useState } from 'react';
 interface SidebarProps {
     collapsed: boolean;
     setCollapsed: (value: boolean) => void;
+    isDirty?: boolean;
+    onNavigationBlocked?: (href: string) => void;
 }
 
-export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
+export function Sidebar({ collapsed, setCollapsed, isDirty, onNavigationBlocked }: SidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
     const [user, setUser] = useState<{ name: string; email: string; role?: string } | null>(null);
@@ -38,13 +40,22 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
         { name: 'Plantillas', href: '/dashboard/templates', icon: FileCog },
         ...(isAdminOrLeader ? [{ name: 'Equipo', href: '/dashboard/team', icon: Users }] : []),
         ...(isAdmin ? [{ name: 'Usuarios', href: '/dashboard/users', icon: UserCog }] : []),
-        { name: 'Ajustes', href: '/dashboard/settings', icon: Settings },
+        ...(isAdmin ? [{ name: 'Ajustes', href: '/dashboard/settings', icon: Settings }] : []),
     ];
 
     const handleLogout = () => {
         localStorage.removeItem('accessToken');
         document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         router.push('/auth/login');
+    };
+
+    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+        // If dirty and trying to navigate away, block and show modal
+        if (isDirty && href !== pathname && onNavigationBlocked) {
+            e.preventDefault();
+            onNavigationBlocked(href);
+        }
+        // Otherwise, let the link work normally
     };
 
     const userInitial = user?.name ? user.name[0].toUpperCase() : 'U';
@@ -62,7 +73,7 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
             </button>
 
             <div className={`p-6 ${collapsed ? 'flex justify-center px-2' : ''}`}>
-                <Link href="/dashboard" className="cursor-pointer overflow-hidden whitespace-nowrap">
+                <Link href="/dashboard" onClick={(e) => handleNavClick(e, '/dashboard')} className="cursor-pointer overflow-hidden whitespace-nowrap">
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                         <div className="w-8 h-8 min-w-[32px] bg-brand-600 rounded-lg flex items-center justify-center">
                             <span className="text-white text-lg font-bold">L</span>
@@ -84,6 +95,7 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
                         <Link
                             key={item.href}
                             href={item.href}
+                            onClick={(e) => handleNavClick(e, item.href)}
                             title={collapsed ? item.name : undefined}
                             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors whitespace-nowrap ${isActive
                                 ? 'bg-brand-50 text-brand-600 font-medium'

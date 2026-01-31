@@ -1,13 +1,14 @@
-import { PanelLeft, Shapes, MousePointer2, Files } from 'lucide-react';
+import { PanelLeft, Shapes, MousePointer2, Files, Hash } from 'lucide-react';
 import { TeamDropdown } from './TeamDropdown';
 
 interface EditorToolbarProps {
-    activeTab: 'tools' | 'pages' | null;
-    onTabChange: (tab: 'tools' | 'pages') => void;
+    activeTab: 'tools' | 'pages' | 'variables' | null;
+    onTabChange: (tab: 'tools' | 'pages' | 'variables') => void;
     signatureType: 'draw' | 'otp';
     onSignatureTypeChange: (type: 'draw' | 'otp') => void;
     processId?: string;
     onProcessChange?: (id: string) => void;
+    onSend?: () => void;
 }
 
 export function EditorToolbar({
@@ -16,7 +17,8 @@ export function EditorToolbar({
     signatureType,
     onSignatureTypeChange,
     processId,
-    onProcessChange
+    onProcessChange,
+    onSend
 }: EditorToolbarProps) {
     return (
         <div className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-4 z-20 shrink-0">
@@ -43,6 +45,18 @@ export function EditorToolbar({
                 >
                     <PanelLeft size={18} />
                     <span className="text-sm font-medium hidden sm:inline">Herramientas</span>
+                </button>
+
+                <button
+                    onClick={() => onTabChange('variables')}
+                    className={`p-1.5 rounded-md flex items-center gap-2 transition-colors ${activeTab === 'variables'
+                        ? 'bg-brand-50 text-brand-600'
+                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                    title="Variables"
+                >
+                    <Hash size={18} />
+                    <span className="text-sm font-medium hidden sm:inline">Variables</span>
                 </button>
 
                 <div className="h-4 w-px bg-gray-200 mx-2" />
@@ -88,6 +102,16 @@ export function EditorToolbar({
                         Firma Electrónica (OTP)
                     </button>
                 </div>
+
+                {onSend && (
+                    <button
+                        onClick={onSend}
+                        className="ml-2 flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-medium text-sm shadow-sm transition-all"
+                    >
+                        {/* Assuming Send icon is needed or text is enough */}
+                        <span>Enviar</span>
+                    </button>
+                )}
             </div>
         </div>
     );

@@ -275,6 +275,7 @@ export default function EditTemplatePage() {
                 pdfUrl={pdfUrl}
                 settings={settings}
                 onSettingsChange={setSettings}
+                templateId={id}
             // Sidebar removed (Now internal)
             />
 

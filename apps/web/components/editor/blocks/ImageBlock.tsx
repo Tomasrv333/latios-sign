@@ -67,12 +67,12 @@ export function ImageBlock({ content, onChange, readOnly, style }: ImageBlockPro
     }
 
     return (
-        <div className="relative group w-full flex justify-center">
+        <div className="relative group w-full h-full">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
                 src={content}
                 alt="Uploaded content"
-                className="max-w-full h-auto rounded-md shadow-sm object-contain max-h-[500px]"
+                className="w-full h-full object-contain rounded-md"
                 style={style}
             />
 

@@ -14,11 +14,13 @@ model Company {
   plan      String   @default("FREE") // FREE, PRO, ENTERPRISE
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  users     User[]
-  templates Template[]
-  documents Document[]
-  processes Process[]
+
+  users             User[]
+  templates         Template[]
+  documents         Document[]
+  processes         Process[]
+  VariableContainer VariableContainer[]
+  Variable          Variable[]
 }
 
 enum Role {
@@ -29,61 +31,62 @@ enum Role {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+  name     String
+
   // Multi-tenancy
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
-  
-  role      Role     @default(MEMBER)
-  
-  documents Document[]
-  
+
+  role Role @default(MEMBER)
+
+  documents        Document[]
+  createdTemplates Template[] @relation("TemplateCreator")
+
   // Process membership (for MANAGER/MEMBER)
   processId String?
   process   Process? @relation(fields: [processId], references: [id])
-  
+
   // Leader assignments (if user is a LEADER)
-  leaderOf  ProcessLeader[]
-  
+  leaderOf ProcessLeader[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 // NEW: Process/Area Entity
 model Process {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   description String?
 
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
 
   // Leaders assigned to this process (M:N)
-  leaders     ProcessLeader[]
+  leaders ProcessLeader[]
 
   // Users (members) in this process
-  members     User[]
+  members User[]
 
   // Templates scoped to this process
-  templates   Template[]
+  templates Template[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Join Table: Process <-> Leader (User)
 model ProcessLeader {
-  id        String   @id @default(uuid())
-  
+  id String @id @default(uuid())
+
   processId String
-  process   Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
-  
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  process   Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
@@ -91,75 +94,129 @@ model ProcessLeader {
 }
 
 model AuditLog {
-  id        String   @id @default(uuid())
-  action    String
-  
+  id     String @id @default(uuid())
+  action String
+
   companyId String
-  
-  metadata  Json?
-  
+
+  metadata Json?
+
   createdAt DateTime @default(now())
 }
 
 model Template {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   description String?
-  structure   Json     @default("{}") // Stores the React DnD state
-  
-  isPublished Boolean  @default(false)
+  structure   Json    @default("{}") // Stores the React DnD state
+
+  isPublished   Boolean @default(false)
+  signatureType String  @default("DIGITAL") // DIGITAL (Scratch), ELECTRONIC (OTP)
+
+  // Creator Tracking
+  creatorId String?
+  creator   User?   @relation("TemplateCreator", fields: [creatorId], references: [id])
 
   // PDF Background
-  pdfUrl      String? // Relative path to the uploaded PDF
-  pdfWidth    Int?
-  pdfHeight   Int?
-  
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  
+  pdfUrl    String? // Relative path to the uploaded PDF
+  pdfWidth  Int?
+  pdfHeight Int?
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
   // Scope to Process (optional for backwards compatibility)
-  processId   String?
-  process     Process? @relation(fields: [processId], references: [id])
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  documents   Document[]
+  processId String?
+  process   Process? @relation(fields: [processId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents Document[]
 }
 
 model Document {
-  id          String   @id @default(uuid())
-  
-  status      String   @default("DRAFT") // DRAFT, SENT, VIEWED, COMPLETED
-  
+  id String @id @default(uuid())
+
+  status String @default("DRAFT") // DRAFT, SENT, VIEWED, COMPLETED
+
   // Recipient Info
   recipientEmail String
   recipientName  String?
-  
-  // Security
-  token       String   @unique // Public access token
-  
-  // Data Snapshot (What was sent)
-  structure   Json     // Copy of template structure at send time
-  pdfUrl      String?  // Copy of PDF URL
-  
-  // Data Capture (What was filled)
-  data        Json     @default("{}") // { "block-id": "value" }
-  
-  // Relations
-  templateId  String
-  template    Template @relation(fields: [templateId], references: [id])
-  
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
 
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
-  
-  sentAt      DateTime?
-  viewedAt    DateTime?
-  signedAt    DateTime?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  // Security
+  token String @unique // Public access token
+
+  // Data Snapshot (What was sent)
+  structure Json // Copy of template structure at send time
+  pdfUrl    String? // Copy of PDF URL
+
+  // Data Capture (What was filled)
+  data Json @default("{}") // { "block-id": "value" }
+
+  // Variables 
+  variableValues Json? // { "client_name": "Acme", ... }
+
+  // Relations
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id])
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  sentAt   DateTime?
+  viewedAt DateTime?
+  signedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// DYNAMIC VARIABLES SYSTEM
+
+enum VariableType {
+  TEXT
+  NUMBER
+  DATE
+  CURRENCY
+  EMAIL
+  PHONE
+}
+
+model VariableContainer {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  variables Variable[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, name])
+}
+
+model Variable {
+  id          String       @id @default(uuid())
+  key         String // The token key, e.g. "client_name" (unique per company ideally, or per container?) -> Usually unique per company is best for replacement simplifiction.
+  label       String // Human readable label
+  type        VariableType @default(TEXT)
+  description String?
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  containerId String?
+  container   VariableContainer? @relation(fields: [containerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, key]) // Ensure keys are unique within a company so {{key}} is unambiguous
 }

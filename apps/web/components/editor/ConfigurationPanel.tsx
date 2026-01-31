@@ -8,6 +8,7 @@ interface ConfigurationPanelProps {
         signatureType: 'draw' | 'otp';
         requireId: boolean;
         companyName?: string;
+        description?: string; // Added description
     };
     onChange: (settings: any) => void;
 }
@@ -70,13 +71,23 @@ export function ConfigurationPanel({ settings, onChange }: ConfigurationPanelPro
                         <Building size={14} />
                         Información
                     </h4>
-                    <div>
+                    <div className="space-y-4">
                         <Input
                             label="Nombre Empresa"
                             value={settings.companyName || ''}
                             onChange={(e) => handleChange('companyName', e.target.value)}
                             placeholder="Ej. Mi Empresa SAS"
                         />
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción de la Plantilla</label>
+                            <textarea
+                                value={settings.description || ''}
+                                onChange={(e) => handleChange('description', e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
+                                rows={3}
+                                placeholder="Describe brevemente el propósito de este documento..."
+                            />
+                        </div>
                     </div>
                 </section>
             </div>

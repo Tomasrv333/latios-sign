@@ -1,53 +1,40 @@
 import { Controller, Post, Body, UseGuards, Request, NotFoundException, Get, Param } from '@nestjs/common';
+import { DocumentsService } from './documents.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { randomUUID } from 'crypto';
 import { Public } from '../auth/public.decorator';
 
 @Controller('documents')
 export class DocumentsController {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private documentsService: DocumentsService
+    ) { }
 
     @Post()
-    // @UseGuards(JwtAuthGuard) // Redundant if global, but keeping for clarity is fine. 
-    // Actually, good practice to rely on global guard if configured, but explicit is okay too.
-    async createDocument(@Request() req, @Body() body: { templateId: string; recipientEmail: string; recipientName: string }) {
-        const { templateId, recipientEmail, recipientName } = body;
+    async createDocument(@Request() req, @Body() body: {
+        templateId: string;
+        recipientEmail: string;
+        recipientName: string;
+        variableValues?: Record<string, string>;
+    }) {
+        const { templateId, recipientEmail, recipientName, variableValues } = body;
         const userId = req.user.userId;
+        const companyId = req.user.companyId;
 
-        // 1. Fetch Template to snapshot
-        const template = await this.prisma.template.findUnique({
-            where: { id: templateId },
-        });
-
-        if (!template) {
-            throw new NotFoundException('Template not found');
-        }
-
-        // 2. Create Document Instance
-        // For now, we auto-send (status: SENT)
-        const token = randomUUID(); // Secure token for public access
-
-        const document = await this.prisma.document.create({
-            data: {
-                templateId,
-                companyId: template.companyId, // Same company as template
-                recipientEmail,
-                recipientName,
-                token,
-                status: 'SENT',
-                sentAt: new Date(),
-                structure: template.structure ?? {}, // Snapshot
-                pdfUrl: template.pdfUrl,
-                userId,
-            },
+        const document = await this.documentsService.createDocument({
+            templateId,
+            recipientEmail,
+            recipientName,
+            variableValues,
+            userId,
+            companyId
         });
 
         return {
             message: 'Document created and sent',
             documentId: document.id,
-            token,
-            publicUrl: `/sign/${token}` // Frontend URL
+            token: document.token,
+            publicUrl: `/sign/${document.token}`
         };
     }
 

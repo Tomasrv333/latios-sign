@@ -1,7 +1,6 @@
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { Type, Calendar, PenTool, Grid, Image as ImageIcon, Minus } from 'lucide-react';
-import { Card } from '@latios/ui';
 
 export type BlockType = 'text' | 'date' | 'signature' | 'table' | 'image' | 'separator';
 
@@ -25,52 +24,51 @@ function ToolboxItem({ type, label, icon }: ToolboxItemProps) {
             ref={setNodeRef}
             {...listeners}
             {...attributes}
-            className={`cursor-move p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-center gap-3 mb-3 ${isDragging ? 'opacity-50 ring-2 ring-brand-200 bg-gray-50' : ''
+            className={`cursor-move px-3 py-2.5 bg-white border border-gray-200 rounded-md hover:border-brand-300 hover:bg-brand-50/50 transition-all flex items-center gap-2.5 ${isDragging ? 'opacity-50 ring-2 ring-brand-300 bg-brand-50 shadow-md' : ''
                 }`}
         >
-            <div className={`text-gray-500 ${isDragging ? 'opacity-50' : ''}`}>{icon}</div>
-            <span className="font-medium text-gray-700">{label}</span>
+            <div className={`text-gray-400 ${isDragging ? 'text-brand-500' : ''}`}>{icon}</div>
+            <span className="text-sm font-medium text-gray-600">{label}</span>
         </div>
     );
 }
 
 export function Toolbox() {
     return (
-        <div className="w-64 bg-gray-50 border-r border-gray-200 p-4 h-full flex flex-col">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                HERRAMIENTAS
+        <div className="w-60 bg-gray-50/80 border-r border-gray-200 p-3 h-full flex flex-col">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">
+                Herramientas
             </h3>
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto space-y-2">
                 <ToolboxItem
                     type="text"
                     label="Texto"
-                    icon={<Type size={20} />}
+                    icon={<Type size={16} />}
                 />
                 <ToolboxItem
                     type="date"
                     label="Fecha"
-                    icon={<Calendar size={20} />}
+                    icon={<Calendar size={16} />}
                 />
                 <ToolboxItem
                     type="signature"
                     label="Firma"
-                    icon={<PenTool size={20} />}
+                    icon={<PenTool size={16} />}
                 />
-                <div className="my-2 border-t border-gray-200"></div>
                 <ToolboxItem
                     type="table"
                     label="Tabla"
-                    icon={<Grid size={20} />}
+                    icon={<Grid size={16} />}
                 />
                 <ToolboxItem
                     type="image"
                     label="Imagen"
-                    icon={<ImageIcon size={20} />}
+                    icon={<ImageIcon size={16} />}
                 />
                 <ToolboxItem
                     type="separator"
                     label="Separador"
-                    icon={<Minus size={20} />}
+                    icon={<Minus size={16} />}
                 />
             </div>
         </div>

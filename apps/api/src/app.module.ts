@@ -13,6 +13,7 @@ import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { VariablesModule } from './modules/variables/variables.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
     ProcessesModule,
     UploadsModule,
     DocumentsModule,
+    VariablesModule,
   ],
   controllers: [HealthController],
   providers: [

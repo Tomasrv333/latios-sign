@@ -7,6 +7,7 @@ import { TeamSelector, Team } from "@/components/wizard/TeamSelector";
 import { TemplateGrid, Template } from "@/components/wizard/TemplateGrid";
 import { RecipientForm, RecipientData } from "@/components/wizard/RecipientForm";
 import { TemplateRenderer } from "@/components/editor/TemplateRenderer";
+import { extractVariables } from "@/lib/variableUtils";
 
 export default function CreateDocumentWizard() {
     const router = useRouter();
@@ -72,6 +73,7 @@ export default function CreateDocumentWizard() {
                     templateId: selectedTemplate.id,
                     recipientEmail: data.email,
                     recipientName: data.name,
+                    variableValues: data.variableValues
                 })
             });
 
@@ -150,8 +152,8 @@ export default function CreateDocumentWizard() {
                         onClick={goBack}
                         disabled={step === 1}
                         className={`p-2 rounded-full transition-all ${step > 1
-                                ? 'text-gray-500 hover:bg-gray-100 hover:text-brand-600 cursor-pointer'
-                                : 'text-gray-200 cursor-default opacity-0'
+                            ? 'text-gray-500 hover:bg-gray-100 hover:text-brand-600 cursor-pointer'
+                            : 'text-gray-200 cursor-default opacity-0'
                             }`}
                         title="Anterior"
                     >
@@ -162,8 +164,8 @@ export default function CreateDocumentWizard() {
                         {/* Step 1 */}
                         <div className="relative flex flex-col items-center group cursor-pointer" onClick={() => step > 1 && setStep(1)}>
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 z-10 ${step >= 1
-                                    ? 'bg-brand-600 text-white shadow-md ring-2 ring-brand-100'
-                                    : 'bg-white border-2 border-gray-300 text-gray-400'
+                                ? 'bg-brand-600 text-white shadow-md ring-2 ring-brand-100'
+                                : 'bg-white border-2 border-gray-300 text-gray-400'
                                 }`}>
                                 {step > 1 ? <Check size={14} strokeWidth={3} /> : '1'}
                             </div>
@@ -184,8 +186,8 @@ export default function CreateDocumentWizard() {
                         {/* Step 2 */}
                         <div className="relative flex flex-col items-center group cursor-pointer" onClick={() => step > 2 && setStep(2)}>
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 z-10 ${step >= 2
-                                    ? 'bg-brand-600 text-white shadow-md ring-2 ring-brand-100'
-                                    : 'bg-white border-2 border-gray-300 text-gray-400'
+                                ? 'bg-brand-600 text-white shadow-md ring-2 ring-brand-100'
+                                : 'bg-white border-2 border-gray-300 text-gray-400'
                                 }`}>
                                 {step > 2 ? <Check size={14} strokeWidth={3} /> : '2'}
                             </div>
@@ -206,8 +208,8 @@ export default function CreateDocumentWizard() {
                         {/* Step 3 */}
                         <div className="relative flex flex-col items-center">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 z-10 ${step >= 3
-                                    ? 'bg-brand-600 text-white shadow-md ring-2 ring-brand-100'
-                                    : 'bg-white border-2 border-gray-300 text-gray-400'
+                                ? 'bg-brand-600 text-white shadow-md ring-2 ring-brand-100'
+                                : 'bg-white border-2 border-gray-300 text-gray-400'
                                 }`}>
                                 3
                             </div>
@@ -223,8 +225,8 @@ export default function CreateDocumentWizard() {
                         onClick={goNext}
                         disabled={!canGoNext() || step === 3}
                         className={`p-2 rounded-full transition-all ${canGoNext() && step < 3
-                                ? 'text-gray-500 hover:bg-gray-100 hover:text-brand-600 cursor-pointer'
-                                : 'text-gray-200 cursor-default opacity-0'
+                            ? 'text-gray-500 hover:bg-gray-100 hover:text-brand-600 cursor-pointer'
+                            : 'text-gray-200 cursor-default opacity-0'
                             }`}
                         title="Siguiente"
                     >
@@ -267,6 +269,7 @@ export default function CreateDocumentWizard() {
                                 templateName={selectedTemplate.name}
                                 onSubmit={handleSendDocument}
                                 loading={isSending}
+                                variables={extractVariables(selectedTemplate.structure.blocks || [])}
                             />
                         </div>
 

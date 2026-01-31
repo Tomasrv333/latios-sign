@@ -28,4 +28,10 @@ body {
   button:focus {
     outline: none;
   }
+
+  input,
+  textarea,
+  select {
+    @apply text-gray-900;
+  }
 }

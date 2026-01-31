@@ -19,6 +19,8 @@ import {
     sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { Toolbox, BlockType } from './Toolbox';
+import { VariablesPanel } from './VariablesPanel';
+import { SendDocumentModal } from '../dashboard/send/SendDocumentModal';
 import { Canvas, EditorBlock } from './Canvas';
 import { EditorToolbar } from './EditorToolbar';
 import { PagesManager } from './PagesManager';
@@ -41,18 +43,20 @@ interface EditorProps {
     pdfUrl?: string | null;
     settings?: any; // Received from parent for Toolbar usage
     onSettingsChange?: (newSettings: any) => void;
+    templateId?: string;
 }
 
-export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettingsChange }: EditorProps) {
+export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettingsChange, templateId }: EditorProps) {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [activeType, setActiveType] = useState<BlockType | null>(null);
     const [isToolboxDrag, setIsToolboxDrag] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
 
     // Sidebar State
-    const [activeTab, setActiveTab] = useState<'tools' | 'pages' | null>('pages'); // Default to Pages as key view
+    const [activeTab, setActiveTab] = useState<'tools' | 'pages' | 'variables' | null>('pages'); // Default to Pages as key view
     const [numPages, setNumPages] = useState(1);
     const [focusPage, setFocusPage] = useState<number | null>(null); // For navigating to a specific page
+    const [isSendModalOpen, setIsSendModalOpen] = useState(false);
 
     React.useEffect(() => {
         setIsMounted(true);
@@ -153,7 +157,7 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettin
                 const newBlock: EditorBlock = {
                     id: Math.random().toString(36).substring(2, 9),
                     type,
-                    content: '',
+                    content: active.data.current.content || '',
                     x,
                     y,
                     // No fixed w/h - blocks will auto-size to content
@@ -256,7 +260,7 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettin
     };
 
     // Sidebar Toggle Logic
-    const handleTabChange = (tab: 'tools' | 'pages') => {
+    const handleTabChange = (tab: 'tools' | 'pages' | 'variables') => {
         if (activeTab === tab) {
             setActiveTab(null); // Close if clicking same
         } else {
@@ -284,6 +288,49 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettin
                         onSettingsChange({ ...settings, processId: id })
                     }
                 }}
+                onSend={() => setIsSendModalOpen(true)}
+            />
+
+            <SendDocumentModal
+                isOpen={isSendModalOpen}
+                onClose={() => setIsSendModalOpen(false)}
+                blocks={blocks}
+                onSend={async (data) => {
+                    try {
+                        if (!templateId) {
+                            alert("Debes guardar la plantilla antes de enviar.");
+                            return;
+                        }
+
+                        const token = localStorage.getItem('accessToken');
+                        const res = await fetch('/api/documents', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                templateId,
+                                recipientEmail: data.recipients[0].email,
+                                recipientName: data.recipients[0].name || 'Signer', // Fallback
+                                variableValues: data.variableValues
+                            })
+                        });
+
+                        if (res.ok) {
+                            const result = await res.json();
+                            // Optional: Redirect to status or show success
+                            alert(`Documento enviado! URL: ${window.location.origin}${result.publicUrl}`);
+                            setIsSendModalOpen(false);
+                        } else {
+                            console.error('Failed to send');
+                            alert('Error al enviar el documento');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert('Error de conexión');
+                    }
+                }}
             />
 
             <div className="flex flex-1 overflow-hidden relative">
@@ -302,6 +349,7 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettin
                     >
                         <div className="w-64 h-full">
                             {activeTab === 'tools' && <Toolbox />}
+                            {activeTab === 'variables' && <VariablesPanel />}
                             {activeTab === 'pages' && (
                                 <PagesManager
                                     blocks={blocks}

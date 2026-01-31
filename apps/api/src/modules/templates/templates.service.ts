@@ -17,7 +17,7 @@ export class TemplatesService {
      * - ADMIN: Creates company-wide template (no process)
      * - LEADER: Creates template for their processes
      */
-    async create(user: UserContext, data: { name: string; description?: string; structure?: any; processId?: string }) {
+    async create(user: UserContext, data: { name: string; description?: string; structure?: any; processId?: string; signatureType?: string }) {
         // Validate processId if provided
         if (data.processId) {
             const process = await this.prisma.process.findUnique({
@@ -45,6 +45,8 @@ export class TemplatesService {
                 companyId: user.companyId,
                 structure: data.structure ?? {},
                 processId: data.processId,
+                signatureType: data.signatureType || 'DIGITAL',
+                creatorId: user.userId,
             },
         });
     }
@@ -56,9 +58,15 @@ export class TemplatesService {
      * - MANAGER/MEMBER: Templates from their assigned process
      */
     async findAll(user: UserContext): Promise<Template[]> {
+        const include = {
+            process: { select: { id: true, name: true } },
+            creator: { select: { id: true, name: true, email: true } }
+        };
+
         if (user.role === 'ADMIN') {
             return this.prisma.template.findMany({
                 where: { companyId: user.companyId },
+                include,
                 orderBy: { updatedAt: 'desc' },
             });
         }
@@ -79,6 +87,7 @@ export class TemplatesService {
                         { processId: { in: processIds } } // Leader's process templates
                     ]
                 },
+                include,
                 orderBy: { updatedAt: 'desc' },
             });
         }
@@ -96,6 +105,7 @@ export class TemplatesService {
                     companyId: user.companyId,
                     processId: null
                 },
+                include,
                 orderBy: { updatedAt: 'desc' },
             });
         }
@@ -108,6 +118,7 @@ export class TemplatesService {
                     { processId: userRecord.processId }
                 ]
             },
+            include,
             orderBy: { updatedAt: 'desc' },
         });
     }
@@ -126,7 +137,7 @@ export class TemplatesService {
         return template;
     }
 
-    async update(user: UserContext, id: string, data: Partial<{ name: string; description: string; structure: any; isPublished: boolean; processId: string }>) {
+    async update(user: UserContext, id: string, data: Partial<{ name: string; description: string; structure: any; isPublished: boolean; processId: string; signatureType: string }>) {
         await this.findOne(user, id);
 
         return this.prisma.template.update({

@@ -7,6 +7,7 @@ interface RecipientFormProps {
     templateName: string;
     onSubmit: (data: RecipientData) => void;
     loading: boolean;
+    variables?: string[];
 }
 
 export interface RecipientData {
@@ -16,9 +17,10 @@ export interface RecipientData {
     sendViaEmail: boolean;
     sendViaWhatsapp: boolean;
     isMassive: boolean;
+    variableValues?: Record<string, string>;
 }
 
-export function RecipientForm({ templateName, onSubmit, loading }: RecipientFormProps) {
+export function RecipientForm({ templateName, onSubmit, loading, variables = [] }: RecipientFormProps) {
     const [mode, setMode] = useState<'individual' | 'massive'>('individual');
     const [formData, setFormData] = useState<RecipientData>({
         name: '',
@@ -28,10 +30,11 @@ export function RecipientForm({ templateName, onSubmit, loading }: RecipientForm
         sendViaWhatsapp: false,
         isMassive: false
     });
+    const [variableValues, setVariableValues] = useState<Record<string, string>>({});
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit({ ...formData, isMassive: mode === 'massive' });
+        onSubmit({ ...formData, isMassive: mode === 'massive', variableValues });
     };
 
     return (
@@ -48,8 +51,8 @@ export function RecipientForm({ templateName, onSubmit, loading }: RecipientForm
                         type="button"
                         onClick={() => setMode('individual')}
                         className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${mode === 'individual'
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Individual
@@ -58,8 +61,8 @@ export function RecipientForm({ templateName, onSubmit, loading }: RecipientForm
                         type="button"
                         onClick={() => setMode('massive')}
                         className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${mode === 'massive'
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Masivo
@@ -116,6 +119,34 @@ export function RecipientForm({ templateName, onSubmit, loading }: RecipientForm
                                 </div>
                             </div>
                         </div>
+
+                        {variables.length > 0 && (
+                            <div className="border-t border-gray-100 pt-5 space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-brand-500 rounded-full"></span>
+                                    Variables del Documento
+                                </h3>
+                                <p className="text-xs text-gray-500">
+                                    Esta plantilla contiene variables. Puedes llenarlas ahora o dejar que el destinatario las complete (si aplica).
+                                </p>
+                                <div className="grid grid-cols-1 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                    {variables.map(variable => (
+                                        <div key={variable}>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1 capitalize">
+                                                {variable.replace(/_/g, ' ')}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={variableValues[variable] || ''}
+                                                onChange={(e) => setVariableValues(prev => ({ ...prev, [variable]: e.target.value }))}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm"
+                                                placeholder={`Valor para ${variable}`}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="pt-4 border-t border-gray-100">
                             <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">Canales de Envío</label>
