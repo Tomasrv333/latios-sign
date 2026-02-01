@@ -19,6 +19,7 @@ export interface Template {
     signatureType: 'digital' | 'electronic' | 'DIGITAL' | 'ELECTRONIC'; // Loose type to handle both API/UI cases
     processId?: string;
     creator?: { name: string };
+    process?: { id: string; name: string };
 }
 
 interface TemplateCardProps {
