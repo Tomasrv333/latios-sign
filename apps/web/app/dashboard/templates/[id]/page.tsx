@@ -6,7 +6,7 @@ import { EditorBlock } from "@/components/editor/Canvas";
 import { TemplateRenderer } from "@/components/editor/TemplateRenderer";
 import { useRouter, useParams } from "next/navigation";
 import { createPortal } from "react-dom";
-import { Loader2, Pencil, Eye, Save, ArrowLeft, Trash2, Settings } from "lucide-react";
+import { Loader2, Pencil, Eye, Save, ArrowLeft, Trash2, Settings, CheckCircle, AlertCircle } from "lucide-react";
 import { useNavigationGuard } from "@/hooks/useNavigationGuard";
 import { ConfigurationPanel } from "@/components/editor/ConfigurationPanel";
 // import { Input } from "@/components/ui/Input"; // Will use in ConfigPanel refactor
@@ -88,8 +88,12 @@ export default function EditTemplatePage() {
             .then((data) => {
                 setName(data.name);
                 // Load description into settings for the panel
+                // Map Backend Enum to Frontend State
+                const backendType = data.signatureType || 'DIGITAL';
+                const uiSignatureType = backendType === 'ELECTRONIC' ? 'otp' : 'draw';
+
                 const initialSettings = {
-                    signatureType: 'draw' as 'draw' | 'otp',
+                    signatureType: uiSignatureType as 'draw' | 'otp',
                     requireId: false,
                     companyName: '',
                     description: data.description || '', // Load description
@@ -105,6 +109,8 @@ export default function EditTemplatePage() {
                     }
                     if (data.structure.settings) {
                         Object.assign(initialSettings, data.structure.settings);
+                        // Force override with DB column truth if present, ensuring consistency
+                        initialSettings.signatureType = uiSignatureType;
                         if (!initialSettings.description) initialSettings.description = data.description || '';
                     }
                 } else {
@@ -139,6 +145,10 @@ export default function EditTemplatePage() {
 
         try {
             setIsSaving(true);
+
+            // Map Frontend State to Backend Enum
+            const apiSignatureType = settings.signatureType === 'otp' ? 'ELECTRONIC' : 'DIGITAL';
+
             const token = localStorage.getItem('accessToken');
             const response = await fetch(`/api/templates/${id}`, {
                 method: 'PATCH',
@@ -148,13 +158,14 @@ export default function EditTemplatePage() {
                 },
                 body: JSON.stringify({
                     name,
-                    description: settings.description?.trim() || undefined, // Use description from settings
+                    description: settings.description?.trim() || undefined,
                     processId: settings.processId || undefined,
+                    signatureType: apiSignatureType, // Crucial: Send mapped value
                     structure: {
                         blocks,
-                        settings // Persist settings (including description copy for safety)
+                        settings
                     },
-                    pdfUrl: pdfUrl, // Keep existing PDF URL if any
+                    pdfUrl: pdfUrl,
                 }),
             });
 
@@ -163,7 +174,13 @@ export default function EditTemplatePage() {
             }
 
             setShowSaveConfirm(false); // Close modal
-            router.push('/dashboard/templates');
+
+            // Update initial refs to mark as clean without reload
+            initialBlocksRef.current = blocks;
+            initialNameRef.current = name;
+            setIsDirty(false); // Manually set clean
+
+            // Optional: Show success toast here if available, or rely on "Cambios guardados" status
         } catch (error) {
             console.error(error);
             setError('Error al actualizar la plantilla');
@@ -211,6 +228,14 @@ export default function EditTemplatePage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {/* Status Label */}
+                    <div className="flex items-center mr-4">
+                        <div className={`w-2 h-2 rounded-full mr-2 ${isDirty ? 'bg-amber-500' : 'bg-green-500'}`} />
+                        <span className={`text-sm font-medium ${isDirty ? 'text-amber-600' : 'text-green-600'}`}>
+                            {isDirty ? 'Cambios sin guardar' : 'Cambios guardados'}
+                        </span>
+                    </div>
+
                     {/* Delete Button */}
                     <button
                         onClick={async () => {

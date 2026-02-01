@@ -20,12 +20,13 @@ import {
 } from '@dnd-kit/sortable';
 import { Toolbox, BlockType } from './Toolbox';
 import { VariablesPanel } from './VariablesPanel';
+import { FiguresPanel } from './FiguresPanel';
 import { SendDocumentModal } from '../dashboard/send/SendDocumentModal';
 import { Canvas, EditorBlock } from './Canvas';
 import { EditorToolbar } from './EditorToolbar';
 import { PagesManager } from './PagesManager';
 import { Type, Calendar, PenTool } from 'lucide-react';
-import { snapToGridModifier } from './modifiers';
+import { snapToGridModifier, createSmartGuidesModifier, Guideline } from './modifiers';
 
 const dropAnimation: DragOverlayProps['dropAnimation'] = {
     sideEffects: defaultDropAnimationSideEffects({
@@ -51,9 +52,16 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettin
     const [activeType, setActiveType] = useState<BlockType | null>(null);
     const [isToolboxDrag, setIsToolboxDrag] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+    const [guidelines, setGuidelines] = useState<Guideline[]>([]); // Smart Guides State
+
+    // Modifier logic
+    const smartGuidesModifier = React.useMemo(
+        () => createSmartGuidesModifier(blocks, (lines) => setGuidelines(lines)),
+        [blocks]
+    );
 
     // Sidebar State
-    const [activeTab, setActiveTab] = useState<'tools' | 'pages' | 'variables' | null>('pages'); // Default to Pages as key view
+    const [activeTab, setActiveTab] = useState<'tools' | 'pages' | 'variables' | 'figures' | null>('pages'); // Default to Pages as key view
     const [numPages, setNumPages] = useState(1);
     const [focusPage, setFocusPage] = useState<number | null>(null); // For navigating to a specific page
     const [isSendModalOpen, setIsSendModalOpen] = useState(false);
@@ -95,8 +103,10 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettin
         // For now, everything drops into 'canvas' or reorders within it
     }
 
+
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
+        setGuidelines([]); // Clear lines on drop
 
         if (!over) {
             setActiveId(null);
@@ -154,10 +164,17 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettin
 
             if (active.data.current?.isToolboxItem) {
                 const type = active.data.current.type as BlockType;
+
+                // If it's a figure, get the specific shape from data
+                let content = active.data.current.content || '';
+                if (type === 'figure') {
+                    content = active.data.current.figureType || 'square';
+                }
+
                 const newBlock: EditorBlock = {
                     id: Math.random().toString(36).substring(2, 9),
                     type,
-                    content: active.data.current.content || '',
+                    content,
                     x,
                     y,
                     // No fixed w/h - blocks will auto-size to content
@@ -260,7 +277,7 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettin
     };
 
     // Sidebar Toggle Logic
-    const handleTabChange = (tab: 'tools' | 'pages' | 'variables') => {
+    const handleTabChange = (tab: 'tools' | 'pages' | 'variables' | 'figures') => {
         if (activeTab === tab) {
             setActiveTab(null); // Close if clicking same
         } else {
@@ -288,50 +305,9 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettin
                         onSettingsChange({ ...settings, processId: id })
                     }
                 }}
-                onSend={() => setIsSendModalOpen(true)}
             />
 
-            <SendDocumentModal
-                isOpen={isSendModalOpen}
-                onClose={() => setIsSendModalOpen(false)}
-                blocks={blocks}
-                onSend={async (data) => {
-                    try {
-                        if (!templateId) {
-                            alert("Debes guardar la plantilla antes de enviar.");
-                            return;
-                        }
-
-                        const token = localStorage.getItem('accessToken');
-                        const res = await fetch('/api/documents', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}`
-                            },
-                            body: JSON.stringify({
-                                templateId,
-                                recipientEmail: data.recipients[0].email,
-                                recipientName: data.recipients[0].name || 'Signer', // Fallback
-                                variableValues: data.variableValues
-                            })
-                        });
-
-                        if (res.ok) {
-                            const result = await res.json();
-                            // Optional: Redirect to status or show success
-                            alert(`Documento enviado! URL: ${window.location.origin}${result.publicUrl}`);
-                            setIsSendModalOpen(false);
-                        } else {
-                            console.error('Failed to send');
-                            alert('Error al enviar el documento');
-                        }
-                    } catch (e) {
-                        console.error(e);
-                        alert('Error de conexión');
-                    }
-                }}
-            />
+            {/* SendDocumentModal Removed */}
 
             <div className="flex flex-1 overflow-hidden relative">
                 <DndContext
@@ -340,7 +316,7 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettin
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
                     onDragEnd={handleDragEnd}
-                    modifiers={[snapToGridModifier]}
+                    modifiers={[smartGuidesModifier]}
                 >
                     {/* Collapsible Sidebar */}
                     <div
@@ -349,6 +325,7 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettin
                     >
                         <div className="w-64 h-full">
                             {activeTab === 'tools' && <Toolbox />}
+                            {activeTab === 'figures' && <FiguresPanel />}
                             {activeTab === 'variables' && <VariablesPanel />}
                             {activeTab === 'pages' && (
                                 <PagesManager
@@ -367,6 +344,7 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettin
 
                     <Canvas
                         blocks={blocks}
+                        guidelines={guidelines}
                         onDeleteBlock={handleDeleteBlock}
                         onUpdateBlock={handleUpdateBlock}
                         pdfUrl={pdfUrl}
@@ -385,6 +363,7 @@ export function Editor({ blocks, onChange: setBlocks, pdfUrl, settings, onSettin
                                         {activeType === 'text' && <Type />}
                                         {activeType === 'date' && <Calendar />}
                                         {activeType === 'signature' && <PenTool />}
+                                        {activeType === 'figure' && <span className="font-bold text-xl">♦</span>}
                                         <span className="font-medium capitalize">{activeType}</span>
                                     </div>
                                 </div>

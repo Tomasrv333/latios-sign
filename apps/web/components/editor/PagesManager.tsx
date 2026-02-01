@@ -17,6 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { EditorBlock } from './Canvas';
+import { FigureBlock } from './blocks/FigureBlock';
 
 interface PagesManagerProps {
     blocks: EditorBlock[];
@@ -77,7 +78,8 @@ function PageThumbnail({ id, index, blocks, onDelete, showDelete, onClick }: { i
                                     left: block.x,
                                     top: block.y,
                                     width: block.w || 300,
-                                    height: block.h || 'auto',
+                                    height: block.h || (block.type === 'figure' ? 100 : 'auto'),
+                                    zIndex: block.zIndex ?? 1,
                                 }}
                             >
                                 {block.type === 'text' && (
@@ -115,6 +117,12 @@ function PageThumbnail({ id, index, blocks, onDelete, showDelete, onClick }: { i
                                 {block.type === 'image' && !block.content && (
                                     <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                                         <span className="text-[10px] text-gray-400">Img</span>
+                                    </div>
+                                )}
+
+                                {block.type === 'figure' && (
+                                    <div className="w-full h-full pointer-events-none">
+                                        <FigureBlock content={block.content || 'square'} onChange={() => { }} style={{ ...block.style }} />
                                     </div>
                                 )}
                             </div>

@@ -1,0 +1,38 @@
+name: Deploy Latios-Sign
+
+on:
+  push:
+    branches: [ main ] # Se ejecuta cada vez que subas algo a la rama main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to DigitalOcean via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            # Entrar a la carpeta del proyecto (o clonar si no existe)
+            if [ ! -d "latios-sign" ]; then
+              git clone https://github.com/${{ github.repository }}.git latios-sign
+            fi
+            cd latios-sign
+            
+            # Traer los últimos cambios
+            git pull origin main
+            
+            # Crear archivo .env temporal para la DB
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" > infra/.env.prod
+            
+            # Levantar los servicios con el archivo prod
+            # Usamos --build para que reconstruya las imágenes con el nuevo código
+            docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod up -d --build
+            
+            # Limpiar imágenes antiguas para no llenar el disco de 25GB
+            docker image prune -f

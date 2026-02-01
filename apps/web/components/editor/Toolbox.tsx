@@ -2,7 +2,7 @@ import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { Type, Calendar, PenTool, Grid, Image as ImageIcon, Minus } from 'lucide-react';
 
-export type BlockType = 'text' | 'date' | 'signature' | 'table' | 'image' | 'separator';
+export type BlockType = 'text' | 'date' | 'signature' | 'table' | 'image' | 'separator' | 'figure';
 
 interface ToolboxItemProps {
     type: BlockType;

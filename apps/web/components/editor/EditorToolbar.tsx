@@ -1,14 +1,13 @@
-import { PanelLeft, Shapes, MousePointer2, Files, Hash } from 'lucide-react';
+import { Wrench, Shapes, MousePointer2, Files, Hash } from 'lucide-react';
 import { TeamDropdown } from './TeamDropdown';
 
 interface EditorToolbarProps {
-    activeTab: 'tools' | 'pages' | 'variables' | null;
-    onTabChange: (tab: 'tools' | 'pages' | 'variables') => void;
+    activeTab: 'tools' | 'pages' | 'variables' | 'figures' | null;
+    onTabChange: (tab: 'tools' | 'pages' | 'variables' | 'figures') => void;
     signatureType: 'draw' | 'otp';
     onSignatureTypeChange: (type: 'draw' | 'otp') => void;
     processId?: string;
     onProcessChange?: (id: string) => void;
-    onSend?: () => void;
 }
 
 export function EditorToolbar({
@@ -18,7 +17,6 @@ export function EditorToolbar({
     onSignatureTypeChange,
     processId,
     onProcessChange,
-    onSend
 }: EditorToolbarProps) {
     return (
         <div className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-4 z-20 shrink-0">
@@ -43,9 +41,23 @@ export function EditorToolbar({
                         }`}
                     title="Herramientas"
                 >
-                    <PanelLeft size={18} />
+                    <Wrench size={18} />
                     <span className="text-sm font-medium hidden sm:inline">Herramientas</span>
                 </button>
+
+                <button
+                    onClick={() => onTabChange('figures')}
+                    className={`p-1.5 rounded-md flex items-center gap-2 transition-colors ${activeTab === 'figures'
+                        ? 'bg-brand-50 text-brand-600'
+                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                    title="Figuras"
+                >
+                    <Shapes size={18} />
+                    <span className="text-sm font-medium hidden sm:inline">Figuras</span>
+                </button>
+
+                <div className="h-4 w-px bg-gray-200 mx-2" />
 
                 <button
                     onClick={() => onTabChange('variables')}
@@ -57,17 +69,6 @@ export function EditorToolbar({
                 >
                     <Hash size={18} />
                     <span className="text-sm font-medium hidden sm:inline">Variables</span>
-                </button>
-
-                <div className="h-4 w-px bg-gray-200 mx-2" />
-
-                <button
-                    className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-50 flex items-center gap-2 cursor-not-allowed"
-                    title="Próximamente: Figuras"
-                    disabled
-                >
-                    <Shapes size={18} />
-                    <span className="text-sm font-medium hidden sm:inline">Figuras</span>
                 </button>
             </div>
 
@@ -102,16 +103,6 @@ export function EditorToolbar({
                         Firma Electrónica (OTP)
                     </button>
                 </div>
-
-                {onSend && (
-                    <button
-                        onClick={onSend}
-                        className="ml-2 flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-medium text-sm shadow-sm transition-all"
-                    >
-                        {/* Assuming Send icon is needed or text is enough */}
-                        <span>Enviar</span>
-                    </button>
-                )}
             </div>
         </div>
     );

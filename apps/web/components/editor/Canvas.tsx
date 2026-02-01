@@ -6,7 +6,9 @@ import { DraggableBlock } from './DraggableBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { SmartTextBlock } from './blocks/SmartTextBlock';
 import { ImageBlock } from './blocks/ImageBlock';
+import { FigureBlock } from './blocks/FigureBlock';
 import dynamic from 'next/dynamic';
+import { snapToGridModifier, Guideline } from './modifiers';
 
 const PdfBackground = dynamic(() => import('./PdfBackground'), {
     ssr: false,
@@ -23,10 +25,12 @@ export interface EditorBlock {
     content?: string;
     style?: React.CSSProperties;
     page: number; // New Property: Page Number (1-indexed)
+    zIndex?: number;
 }
 
 interface CanvasProps {
     blocks: EditorBlock[];
+    guidelines?: Guideline[]; // Received from Editor
     onDeleteBlock: (id: string) => void;
     onUpdateBlock: (id: string, updates: Partial<EditorBlock>) => void;
     pdfUrl?: string | null;
@@ -36,7 +40,7 @@ interface CanvasProps {
     onFocusPageHandled?: () => void; // Callback to clear focusPage after navigating
 }
 
-const SinglePage = React.forwardRef(({ pageNumber, blocks, zoom, pdfUrl, children }: any, ref: any) => {
+const SinglePage = React.forwardRef(({ pageNumber, blocks, zoom, pdfUrl, guidelines, children }: any, ref: any) => {
     const { setNodeRef } = useDroppable({
         id: `canvas-page-${pageNumber}`,
         data: { page: pageNumber }
@@ -57,6 +61,7 @@ const SinglePage = React.forwardRef(({ pageNumber, blocks, zoom, pdfUrl, childre
             style={{
                 backgroundImage: !pdfUrl ? 'radial-gradient(#e5e7eb 1px, transparent 1px)' : 'none',
                 backgroundSize: '20px 20px',
+                backgroundPosition: '-10px -10px', // Shift dots to align with grid Intersections (0,0)
                 transform: `scale(${zoom})`,
             }}
         >
@@ -73,12 +78,35 @@ const SinglePage = React.forwardRef(({ pageNumber, blocks, zoom, pdfUrl, childre
                 />
             )}
 
+            {/* Smart Guides Overlay */}
+            {guidelines && guidelines.map((line: Guideline, i: number) => {
+                if (line.page && line.page !== pageNumber) return null;
+
+                if (line.orientation === 'vertical') {
+                    return (
+                        <div
+                            key={i}
+                            className="absolute top-0 bottom-0 w-px bg-brand-500 z-[1000] pointer-events-none"
+                            style={{ left: line.x }}
+                        />
+                    );
+                } else {
+                    return (
+                        <div
+                            key={i}
+                            className="absolute left-0 right-0 h-px bg-brand-500 z-[1000] pointer-events-none"
+                            style={{ top: line.y }}
+                        />
+                    );
+                }
+            })}
+
             {children}
         </div>
     );
 });
 
-export function Canvas({ blocks, onDeleteBlock, onUpdateBlock, pdfUrl, numPages, onAddPage, focusPage, onFocusPageHandled }: CanvasProps) {
+export function Canvas({ blocks, guidelines, onDeleteBlock, onUpdateBlock, pdfUrl, numPages, onAddPage, focusPage, onFocusPageHandled }: CanvasProps) {
     // Note: We don't use useDroppable('canvas') here anymore. Each page is a droppable.
 
     const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
@@ -125,6 +153,32 @@ export function Canvas({ blocks, onDeleteBlock, onUpdateBlock, pdfUrl, numPages,
             if (rows[0]?.length > 1) rows = rows.map(r => r.slice(0, -1));
         }
         onUpdateBlock(blockId, { content: JSON.stringify({ rows }) });
+    };
+
+    const handleLayerChange = (blockId: string, action: 'front' | 'back' | 'forward' | 'backward') => {
+        const block = blocks.find(b => b.id === blockId);
+        if (!block) return;
+
+        let newZIndex = block.zIndex || 1;
+        const allZIndices = blocks.map(b => b.zIndex || 1);
+
+        switch (action) {
+            case 'front':
+                newZIndex = Math.max(...allZIndices, 0) + 1;
+                break;
+            case 'back':
+                // Prevent negative z-index which puts it behind the page background
+                newZIndex = Math.max(0, Math.min(...allZIndices) - 1);
+                break;
+            case 'forward':
+                newZIndex += 1;
+                break;
+            case 'backward':
+                newZIndex = Math.max(0, newZIndex - 1);
+                break;
+        }
+
+        onUpdateBlock(blockId, { zIndex: newZIndex });
     };
 
     // Zoom handlers
@@ -212,6 +266,7 @@ export function Canvas({ blocks, onDeleteBlock, onUpdateBlock, pdfUrl, numPages,
                                 blocks={pageBlocks}
                                 zoom={1} // Zoom handled by parent wrapper
                                 pdfUrl={pdfUrl}
+                                guidelines={guidelines} // Pass guidelines
                             >
                                 {pageBlocks.map((block) => {
                                     const isSelected = selectedBlockId === block.id;
@@ -241,6 +296,7 @@ export function Canvas({ blocks, onDeleteBlock, onUpdateBlock, pdfUrl, numPages,
                                                 block={block}
                                                 onDelete={onDeleteBlock}
                                                 onUpdate={onUpdateBlock}
+                                                onLayerChange={handleLayerChange}
                                                 settingsMenu={settingsMenu}
                                                 isSelected={isSelected}
                                                 onEditModeChange={(isEditing) => isEditing ? setEditingBlockId(block.id) : setEditingBlockId(null)}
@@ -278,6 +334,13 @@ export function Canvas({ blocks, onDeleteBlock, onUpdateBlock, pdfUrl, numPages,
                                                     <ImageBlock
                                                         content={block.content}
                                                         onChange={(newContent) => onUpdateBlock(block.id, { content: newContent })}
+                                                        style={block.style}
+                                                    />
+                                                )}
+                                                {block.type === 'figure' && (
+                                                    <FigureBlock
+                                                        content={block.content || 'square'}
+                                                        onChange={(updates) => onUpdateBlock(block.id, updates)}
                                                         style={block.style}
                                                     />
                                                 )}

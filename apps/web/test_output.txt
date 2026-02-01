@@ -1,0 +1,35 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › e2e\document-lifecycle.spec.ts:26:9 › Document Lifecycle › should allow creating and sending a document via Wizard
+[1A[2K  1) [chromium] › e2e\document-lifecycle.spec.ts:26:9 › Document Lifecycle › should allow creating and sending a document via Wizard 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('Contrato de Prueba')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Contrato de Prueba')[22m
+
+
+      53 |         // Step 2: Template Selector
+      54 |         // Should show our mock template
+    > 55 |         await expect(page.getByText('Contrato de Prueba')).toBeVisible();
+         |                                                            ^
+      56 |         await page.getByText('Contrato de Prueba').click();
+      57 |
+      58 |         // Step 3: Configuration
+        at C:\Users\uinformatica8.GIGHA\OneDrive - GIGHA SAS - JIRO SAS\Documentos\Tomas\latios-sign\apps\web\e2e\document-lifecycle.spec.ts:55:60
+
+    Error Context: test-results\document-lifecycle-Documen-d8151-nding-a-document-via-Wizard-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › e2e\document-lifecycle.spec.ts:26:9 › Document Lifecycle › should allow creating and sending a document via Wizard 
+
+[36m  Serving HTML report at http://localhost:33646. Press Ctrl+C to quit.[39m
+^C

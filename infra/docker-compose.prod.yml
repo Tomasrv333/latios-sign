@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: latios-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-latios}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-latios}
+    volumes:
+      - latios_pgdata:/var/lib/postgresql/data
+    networks:
+      - latios-network
+    # Nota: No hay sección 'ports', así la DB queda aislada del exterior
+
+  api:
+    build:
+      context: ..
+      dockerfile: ../apps/api/Dockerfile # Debes crear este Dockerfile
+    container_name: latios-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-latios}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-latios}?schema=public
+    ports:
+      - "3001:3000"
+    networks:
+      - latios-network
+    depends_on:
+      - postgres
+
+  web:
+    build:
+      context: ..
+      dockerfile: ../apps/web/Dockerfile # Debes crear este Dockerfile
+    container_name: latios-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - latios-network
+    depends_on:
+      - api
+
+networks:
+  latios-network:
+    driver: bridge
+
+volumes:
+  latios_pgdata:

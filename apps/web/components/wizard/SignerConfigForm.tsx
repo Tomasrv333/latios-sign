@@ -3,26 +3,24 @@
 import React, { useState } from 'react';
 import { Mail, User, Phone, Upload, Send } from 'lucide-react';
 
-interface RecipientFormProps {
+interface SignerConfigFormProps {
     templateName: string;
-    onSubmit: (data: RecipientData) => void;
+    onSubmit: (data: SignerData) => void;
     loading: boolean;
-    variables?: string[];
 }
 
-export interface RecipientData {
+export interface SignerData {
     name: string;
     email: string;
     phone?: string;
     sendViaEmail: boolean;
     sendViaWhatsapp: boolean;
     isMassive: boolean;
-    variableValues?: Record<string, string>;
 }
 
-export function RecipientForm({ templateName, onSubmit, loading, variables = [] }: RecipientFormProps) {
+export function SignerConfigForm({ templateName, onSubmit, loading }: SignerConfigFormProps) {
     const [mode, setMode] = useState<'individual' | 'massive'>('individual');
-    const [formData, setFormData] = useState<RecipientData>({
+    const [formData, setFormData] = useState<SignerData>({
         name: '',
         email: '',
         phone: '',
@@ -30,25 +28,20 @@ export function RecipientForm({ templateName, onSubmit, loading, variables = [] 
         sendViaWhatsapp: false,
         isMassive: false
     });
-    const [variableValues, setVariableValues] = useState<Record<string, string>>({});
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const { _delegate, ...cleanValues } = variableValues;
-        // If delegating, send empty values (or handle as needed by API to indicate delegation)
-        // For now, sending cleanValues. If _delegate was true, cleanValues might be empty => placeholders remain.
-        onSubmit({ ...formData, isMassive: mode === 'massive', variableValues: _delegate === 'true' ? {} : cleanValues });
+        onSubmit({ ...formData, isMassive: mode === 'massive' });
     };
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-right-8 duration-500">
-            {/* Header - Simpler and cleaner */}
+            {/* Header */}
             <div className="px-6 py-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-base font-semibold text-gray-900">Detalles del Destinatario</h2>
-                    <p className="text-sm text-gray-500">Completa la información para <span className="font-medium text-gray-900">{templateName}</span></p>
+                    <h2 className="text-base font-semibold text-gray-900">Detalles del Firmante</h2>
+                    <p className="text-sm text-gray-500">¿A quién se le enviará <span className="font-medium text-gray-900">{templateName}</span>?</p>
                 </div>
-                {/* Tabs as a segmented control or pills */}
                 <div className="flex bg-gray-100 p-1 rounded-lg self-start sm:self-center">
                     <button
                         type="button"
@@ -122,65 +115,6 @@ export function RecipientForm({ templateName, onSubmit, loading, variables = [] 
                                 </div>
                             </div>
                         </div>
-
-                        {variables.length > 0 && (
-                            <div className="border-t border-gray-100 pt-5 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 bg-brand-500 rounded-full"></span>
-                                        Variables del Documento
-                                    </h3>
-                                    {/* Delegation Toggle */}
-                                    <div className="flex bg-gray-100 p-0.5 rounded-lg">
-                                        <button
-                                            type="button"
-                                            onClick={() => setVariableValues(prev => ({ ...prev, _delegate: 'false' }))}
-                                            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${variableValues._delegate !== 'true'
-                                                ? 'bg-white text-gray-900 shadow-sm'
-                                                : 'text-gray-500 hover:text-gray-700'
-                                                }`}
-                                        >
-                                            Llenar Ahora
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setVariableValues(prev => ({ ...prev, _delegate: 'true' }))}
-                                            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${variableValues._delegate === 'true'
-                                                ? 'bg-white text-gray-900 shadow-sm'
-                                                : 'text-gray-500 hover:text-gray-700'
-                                                }`}
-                                        >
-                                            Solicitar al Firmante
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <p className="text-xs text-gray-500">
-                                    {variableValues._delegate === 'true'
-                                        ? "El destinatario deberá completar estos campos antes de firmar."
-                                        : "Completa los valores ahora. Se reemplazarán en el documento final."}
-                                </p>
-
-                                {variableValues._delegate !== 'true' && (
-                                    <div className="grid grid-cols-1 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100 animate-in fade-in">
-                                        {variables.map(variable => (
-                                            <div key={variable}>
-                                                <label className="block text-xs font-medium text-gray-700 mb-1 capitalize">
-                                                    {variable.replace(/_/g, ' ')}
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={variableValues[variable] || ''}
-                                                    onChange={(e) => setVariableValues(prev => ({ ...prev, [variable]: e.target.value }))}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm"
-                                                    placeholder={`Valor para ${variable}`}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
 
                         <div className="pt-4 border-t border-gray-100">
                             <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">Canales de Envío</label>

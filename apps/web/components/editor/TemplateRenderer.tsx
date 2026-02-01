@@ -2,6 +2,7 @@ import React from 'react';
 import { EditorBlock } from './Canvas';
 import { TableBlock } from './blocks/TableBlock';
 import { ImageBlock } from './blocks/ImageBlock';
+import { FigureBlock } from './blocks/FigureBlock';
 import dynamic from 'next/dynamic';
 
 // Dynamic import for PDF BG in Renderer if needed, but usually passed via props or separate layer.
@@ -9,12 +10,26 @@ import dynamic from 'next/dynamic';
 
 interface TemplateRendererProps {
     blocks: EditorBlock[];
+    variables?: Record<string, string>;
 }
 
-export function TemplateRenderer({ blocks }: TemplateRendererProps) {
+export function TemplateRenderer({ blocks, variables }: TemplateRendererProps) {
+    // Variable substitution logic
+    const getContent = (content: string) => {
+        if (!variables) return content;
+        let text = content;
+        Object.entries(variables).forEach(([key, value]) => {
+            // Replace {{key}} with value (case insensitive or exact depending on need, usually exact for now)
+            // Using a simple split/join or regex
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            text = text.replace(regex, value || `{{${key}}}`);
+        });
+        return text;
+    };
+
     return (
         <div
-            className="bg-white shadow-lg w-[210mm] min-h-[297mm] mx-auto relative print:shadow-none print:w-full print:mx-0"
+            className="bg-white shadow-lg w-[210mm] min-h-[297mm] mx-auto relative print:shadow-none print:w-full print:mx-0 transition-all duration-300"
         // Ensure we use the same font/base styles as the editor if needed
         >
             {blocks.length === 0 && (
@@ -31,7 +46,8 @@ export function TemplateRenderer({ blocks }: TemplateRendererProps) {
                         left: block.x ?? 0,
                         top: block.y ?? 0,
                         width: block.w || 300,
-                        // height is auto primarily, unless specified (future)
+                        height: block.h || (block.type === 'figure' ? 100 : (block.type === 'image' ? 150 : 'auto')),
+                        zIndex: block.zIndex ?? 1,
                     }}
                 >
                     {block.type === 'text' && (
@@ -39,7 +55,7 @@ export function TemplateRenderer({ blocks }: TemplateRendererProps) {
                             className="text-gray-900 leading-relaxed whitespace-pre-wrap font-normal"
                             style={block.style}
                         >
-                            {block.content || ''}
+                            {getContent(block.content || '')}
                         </div>
                     )}
 
@@ -56,6 +72,16 @@ export function TemplateRenderer({ blocks }: TemplateRendererProps) {
                     {block.type === 'separator' && (
                         <div className="py-2 w-full">
                             <hr className="border-t-2 border-gray-300" style={block.style} />
+                        </div>
+                    )}
+
+                    {block.type === 'figure' && (
+                        <div className="w-full h-full">
+                            <FigureBlock
+                                content={block.content || 'square'}
+                                onChange={() => { }}
+                                style={block.style}
+                            />
                         </div>
                     )}
 

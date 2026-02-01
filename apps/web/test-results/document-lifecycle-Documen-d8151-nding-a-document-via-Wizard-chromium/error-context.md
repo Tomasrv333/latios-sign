@@ -1,0 +1,85 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - button [ref=e4] [cursor=pointer]:
+        - img [ref=e5]
+      - link "L Latios" [ref=e8] [cursor=pointer]:
+        - /url: /dashboard
+        - heading "L Latios" [level=1] [ref=e9]:
+          - generic [ref=e11]: L
+          - generic [ref=e12]: Latios
+      - navigation [ref=e13]:
+        - link "Dashboard" [ref=e14] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e15]
+          - generic [ref=e20]: Dashboard
+        - link "Documentos" [ref=e21] [cursor=pointer]:
+          - /url: /dashboard/documents
+          - img [ref=e22]
+          - generic [ref=e25]: Documentos
+        - link "Plantillas" [ref=e26] [cursor=pointer]:
+          - /url: /dashboard/templates
+          - img [ref=e27]
+          - generic [ref=e39]: Plantillas
+        - link "Equipo" [ref=e40] [cursor=pointer]:
+          - /url: /dashboard/team
+          - img [ref=e41]
+          - generic [ref=e46]: Equipo
+        - link "Usuarios" [ref=e47] [cursor=pointer]:
+          - /url: /dashboard/users
+          - img [ref=e48]
+          - generic [ref=e60]: Usuarios
+        - link "Ajustes" [ref=e61] [cursor=pointer]:
+          - /url: /dashboard/settings
+          - img [ref=e62]
+          - generic [ref=e65]: Ajustes
+      - button "A Admin Cerrar Sesión" [ref=e67] [cursor=pointer]:
+        - generic [ref=e68]: A
+        - generic [ref=e69]:
+          - paragraph [ref=e70]: Admin
+          - paragraph [ref=e71]: Cerrar Sesión
+        - img [ref=e72]
+    - main [ref=e75]:
+      - generic [ref=e76]:
+        - generic [ref=e77]:
+          - generic [ref=e78]:
+            - generic [ref=e79] [cursor=pointer]: Documentos
+            - img [ref=e80]
+            - generic [ref=e82]: Nuevo Envío
+          - heading "Enviar Documento" [level=1] [ref=e83]
+        - generic [ref=e85]:
+          - button [ref=e86] [cursor=pointer]:
+            - img [ref=e87]
+          - generic [ref=e89]:
+            - generic [ref=e91] [cursor=pointer]:
+              - img [ref=e93]
+              - generic [ref=e95]: Equipo
+            - generic [ref=e99] [cursor=pointer]:
+              - generic [ref=e100]: "2"
+              - generic [ref=e101]: Plantilla
+            - generic [ref=e104] [cursor=pointer]:
+              - generic [ref=e105]: "3"
+              - generic [ref=e106]: Configuración
+            - generic [ref=e109] [cursor=pointer]:
+              - generic [ref=e110]: "4"
+              - generic [ref=e111]: Redactar
+          - button [disabled] [ref=e112]:
+            - img [ref=e113]
+        - generic [ref=e116]:
+          - generic [ref=e117]:
+            - generic [ref=e118]:
+              - heading "Selecciona una Plantilla" [level=2] [ref=e119]
+              - paragraph [ref=e120]: Elige el documento base para enviar a firmar
+            - generic [ref=e121]:
+              - img [ref=e122]
+              - textbox "Buscar plantilla..." [ref=e125]
+          - generic [ref=e127]:
+            - img [ref=e128]
+            - paragraph [ref=e131]: No se encontraron plantillas.
+  - button "Open Next.js Dev Tools" [ref=e137] [cursor=pointer]:
+    - img [ref=e138]
+  - alert [ref=e141]
+```

@@ -8,7 +8,8 @@ interface ConfigurationPanelProps {
         signatureType: 'draw' | 'otp';
         requireId: boolean;
         companyName?: string;
-        description?: string; // Added description
+        description?: string;
+        tags?: string[]; // Added tags
     };
     onChange: (settings: any) => void;
 }
@@ -78,6 +79,7 @@ export function ConfigurationPanel({ settings, onChange }: ConfigurationPanelPro
                             onChange={(e) => handleChange('companyName', e.target.value)}
                             placeholder="Ej. Mi Empresa SAS"
                         />
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Descripción de la Plantilla</label>
                             <textarea
@@ -88,9 +90,47 @@ export function ConfigurationPanel({ settings, onChange }: ConfigurationPanelPro
                                 placeholder="Describe brevemente el propósito de este documento..."
                             />
                         </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Etiquetas (Tags)</label>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                                {(settings.tags || []).map((tag: string, index: number) => (
+                                    <span key={index} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                                        {tag}
+                                        <button
+                                            onClick={() => {
+                                                const newTags = settings.tags.filter((_: any, i: number) => i !== index);
+                                                handleChange('tags', newTags);
+                                            }}
+                                            className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Escribe y presiona Enter..."
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const val = e.currentTarget.value.trim();
+                                        if (val && !(settings.tags || []).includes(val)) {
+                                            handleChange('tags', [...(settings.tags || []), val]);
+                                            e.currentTarget.value = '';
+                                        }
+                                    }
+                                }}
+                            />
+                            <p className="text-xs text-gray-400 mt-1">
+                                Úsalas para categorizar por departamento o tipo.
+                            </p>
+                        </div>
                     </div>
                 </section>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
