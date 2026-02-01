@@ -101,11 +101,11 @@ function renderBlockContent(block: EditorBlock, value: string, onChange: (val: s
     }
 
     if (block.type === 'table') {
-        return <TableBlock content={block.content} onChange={() => { }} readOnly />;
+        return <TableBlock content={block.content || ''} onChange={() => { }} readOnly />;
     }
 
     if (block.type === 'image') {
-        return <ImageBlock content={block.content} onChange={() => { }} readOnly style={block.style} />;
+        return <ImageBlock content={block.content || ''} onChange={() => { }} readOnly style={block.style} />;
     }
 
     return null;

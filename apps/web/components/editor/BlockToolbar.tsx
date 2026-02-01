@@ -96,7 +96,7 @@ export function BlockToolbar({ block, onUpdate, onDelete, customActions }: Block
                 {/* Font Size */}
                 <Select
                     width="w-16"
-                    value={style.fontSize || '16px'}
+                    value={(style.fontSize as string) || '16px'}
                     onChange={(val) => updateStyle({ fontSize: val })}
                     options={[
                         { label: '12', value: '12px' },
@@ -220,7 +220,7 @@ export function BlockToolbar({ block, onUpdate, onDelete, customActions }: Block
                     <span className="text-sm font-medium text-gray-700 px-1">Radio:</span>
                     <Select
                         width="w-20"
-                        value={style.borderRadius || '0px'}
+                        value={(style.borderRadius as string) || '0px'}
                         onChange={(val) => updateStyle({ borderRadius: val })}
                         options={[
                             { label: '0', value: '0px' },
@@ -236,7 +236,7 @@ export function BlockToolbar({ block, onUpdate, onDelete, customActions }: Block
                     <span className="text-sm font-medium text-gray-700 px-1">Sombra:</span>
                     <Select
                         width="w-24"
-                        value={style.boxShadow || 'none'}
+                        value={(style.boxShadow as string) || 'none'}
                         onChange={(val) => updateStyle({ boxShadow: val })}
                         options={[
                             { label: 'No', value: 'none' },

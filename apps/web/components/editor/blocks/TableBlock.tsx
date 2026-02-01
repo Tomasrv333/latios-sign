@@ -10,7 +10,12 @@ interface TableData {
     rowTypes?: ('header' | 'static' | 'dynamic')[]; // New: track row type
 }
 
-// ... (TableBlockProps)
+interface TableBlockProps {
+    content: string;
+    onChange: (content: string) => void;
+    readOnly?: boolean;
+    style?: React.CSSProperties;
+}
 
 export function parseTableData(content?: string): TableData {
     if (!content) {

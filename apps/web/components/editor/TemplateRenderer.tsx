@@ -60,12 +60,12 @@ export function TemplateRenderer({ blocks, variables }: TemplateRendererProps) {
                     )}
 
                     {block.type === 'table' && (
-                        <TableBlock content={block.content} onChange={() => { }} readOnly />
+                        <TableBlock content={block.content || ''} onChange={() => { }} readOnly />
                     )}
 
                     {block.type === 'image' && (
                         <div className="w-full">
-                            <ImageBlock content={block.content} onChange={() => { }} readOnly style={block.style} />
+                            <ImageBlock content={block.content || ''} onChange={() => { }} readOnly style={block.style} />
                         </div>
                     )}
 

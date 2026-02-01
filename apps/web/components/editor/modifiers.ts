@@ -25,7 +25,7 @@ export const createSmartGuidesModifier = (
     let lastLines: Guideline[] = [];
 
     return ({ transform, active, draggingNodeRect }) => {
-        if (!draggingNodeRect) return transform;
+        if (!draggingNodeRect || !active) return transform;
 
         // Current position (with grid snap as baseline or raw?) 
         // Let's calculate raw projected position first

@@ -99,7 +99,7 @@ export function ConfigurationPanel({ settings, onChange }: ConfigurationPanelPro
                                         {tag}
                                         <button
                                             onClick={() => {
-                                                const newTags = settings.tags.filter((_: any, i: number) => i !== index);
+                                                const newTags = (settings.tags || []).filter((_: any, i: number) => i !== index);
                                                 handleChange('tags', newTags);
                                             }}
                                             className="text-gray-400 hover:text-gray-600 focus:outline-none"

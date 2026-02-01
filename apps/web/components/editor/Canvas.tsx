@@ -315,7 +315,7 @@ export function Canvas({ blocks, guidelines, onDeleteBlock, onUpdateBlock, pdfUr
                                                 )}
                                                 {block.type === 'table' && (
                                                     <TableBlock
-                                                        content={block.content}
+                                                        content={block.content || ''}
                                                         onChange={(newContent) => onUpdateBlock(block.id, { content: newContent })}
                                                     />
                                                 )}
