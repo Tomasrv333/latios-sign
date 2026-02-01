@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.git
+.github
+.turbo
+apps/*/node_modules
+apps/*/dist
+packages/*/node_modules
+packages/*/dist
+infra/.env.prod
