@@ -16,7 +16,7 @@ services:
   api:
     build:
       context: ..
-      dockerfile: ../apps/api/Dockerfile # Debes crear este Dockerfile
+      dockerfile: apps/api/Dockerfile # Debes crear este Dockerfile
     container_name: latios-api
     restart: unless-stopped
     environment:
@@ -31,7 +31,7 @@ services:
   web:
     build:
       context: ..
-      dockerfile: ../apps/web/Dockerfile # Debes crear este Dockerfile
+      dockerfile: apps/web/Dockerfile # Debes crear este Dockerfile
     container_name: latios-web
     restart: unless-stopped
     ports:
