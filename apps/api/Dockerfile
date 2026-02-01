@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY . .
 
+ENV CI=true
+
 # 1. Instalamos permitiendo scripts de construcción (Para pnpm v10)
 RUN pnpm install --frozen-lockfile --unsafe-perm
 

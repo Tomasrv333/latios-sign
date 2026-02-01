@@ -6,6 +6,7 @@ RUN corepack enable
 FROM base AS builder
 WORKDIR /app
 COPY . .
+ENV CI=true
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter web build
 RUN NODE_OPTIONS="--max-old-space-size=1536" pnpm --filter web build
