@@ -167,6 +167,9 @@ model Document {
   userId String?
   user   User?   @relation(fields: [userId], references: [id])
 
+  signerVariables Json? // Array of strings [ "var1", "var2" ]
+  validationConfig Json? // { video: true, otp: true }
+
   sentAt   DateTime?
   viewedAt DateTime?
   signedAt DateTime?

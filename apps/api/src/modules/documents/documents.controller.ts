@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, NotFoundException, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, NotFoundException, Get, Param, Delete, Patch } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Public } from '../auth/public.decorator';
@@ -10,14 +10,23 @@ export class DocumentsController {
         private documentsService: DocumentsService
     ) { }
 
+    @Get(':id/audit')
+    async getDocumentAudit(@Request() req, @Param('id') id: string) {
+        return this.documentsService.getAuditLogs(id, req.user.companyId);
+    }
+
+
+
+
     @Post()
     async createDocument(@Request() req, @Body() body: {
         templateId: string;
         recipientEmail: string;
         recipientName: string;
         variableValues?: Record<string, string>;
+        signerVariables?: string[];
     }) {
-        const { templateId, recipientEmail, recipientName, variableValues } = body;
+        const { templateId, recipientEmail, recipientName, variableValues, signerVariables } = body;
         const userId = req.user.userId;
         const companyId = req.user.companyId;
 
@@ -26,6 +35,7 @@ export class DocumentsController {
             recipientEmail,
             recipientName,
             variableValues,
+            signerVariables,
             userId,
             companyId
         });
@@ -36,6 +46,16 @@ export class DocumentsController {
             token: document.token,
             publicUrl: `/sign/${document.token}`
         };
+    }
+
+    @Patch(':id/void')
+    async voidDocument(@Request() req, @Param('id') id: string) {
+        return this.documentsService.voidDocument(id, req.user.companyId);
+    }
+
+    @Delete(':id')
+    async deleteDocument(@Request() req, @Param('id') id: string) {
+        return this.documentsService.deleteDocument(id, req.user.companyId);
     }
 
     @Get('stats')
@@ -216,6 +236,7 @@ export class DocumentsController {
             signedAt: document.signedAt,
             // Mock integrity hash for UI demonstration until PDF generation is fully implemented
             integrityHash: 'a7cf4d6bbda858d10eee59f118adf5f6034bb508a42c9974ef83a0a4a6e91146',
+            signerVariables: document.signerVariables
         };
     }
 
@@ -244,7 +265,8 @@ export class DocumentsController {
             },
         });
 
-        // Trigger PDF generation (TODO)
+        // Trigger PDF generation
+        this.documentsService.generateAndSealDocument(document.id).catch(err => console.error("Error generating PDF", err));
 
         return { message: 'Document signed successfully' };
     }
