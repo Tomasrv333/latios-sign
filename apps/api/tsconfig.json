@@ -16,6 +16,11 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
+    "paths": {
+      "@prisma/client": [
+        "./node_modules/.prisma/client"
+      ]
+    },
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
