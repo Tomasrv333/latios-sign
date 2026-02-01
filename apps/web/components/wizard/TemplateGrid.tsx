@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, FileText } from 'lucide-react';
 import { TemplateCard, Template } from '@/components/cards/TemplateCard';
+export type { Template };
 
 interface TemplateGridProps {
     teamId: string;
