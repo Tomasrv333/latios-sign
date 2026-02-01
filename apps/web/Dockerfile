@@ -8,6 +8,7 @@ WORKDIR /app
 COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter web build
+RUN NODE_OPTIONS="--max-old-space-size=1536" pnpm --filter web build
 
 FROM base AS runner
 WORKDIR /app

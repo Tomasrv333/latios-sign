@@ -18,21 +18,19 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            # Entrar a la carpeta del proyecto (o clonar si no existe)
             if [ ! -d "latios-sign" ]; then
               git clone https://github.com/${{ github.repository }}.git latios-sign
             fi
             cd latios-sign
-            
-            # Traer los últimos cambios
             git pull origin main
             
-            # Crear archivo .env temporal para la DB
-            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" > infra/.env.prod
+            # Generamos el archivo con TODOS los datos necesarios
+            echo "POSTGRES_USER=latios" > infra/.env.prod
+            echo "POSTGRES_DB=latios" >> infra/.env.prod
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> infra/.env.prod
             
-            # Levantar los servicios con el archivo prod
-            # Usamos --build para que reconstruya las imágenes con el nuevo código
+            # Esta URL es la que usará NestJS (Prisma/TypeORM) para conectar
+            echo "DATABASE_URL=postgresql://latios:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/latios?schema=public" >> infra/.env.prod
+            
             docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.prod up -d --build
-            
-            # Limpiar imágenes antiguas para no llenar el disco de 25GB
             docker image prune -f
