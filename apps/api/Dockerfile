@@ -16,7 +16,7 @@ RUN pnpm install --frozen-lockfile --unsafe-perm
 
 # 2. Generamos Prisma usando la ruta RELATIVA CORRECTA
 # Si estás en la raíz del monorepo dentro de /app:
-RUN pnpm --filter api exec prisma generate --schema=apps/api/prisma/schema.prisma
+RUN pnpm --filter api exec prisma generate --schema=./prisma/schema.prisma
 
 # 3. Compilamos
 RUN pnpm --filter api build
