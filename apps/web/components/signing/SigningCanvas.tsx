@@ -48,7 +48,7 @@ export function SigningCanvas({ blocks, values, onChange, pdfUrl }: SigningCanva
                             zIndex: 10
                         }}
                     >
-                        {renderBlockContent(block, values[block.id] || '', (val) => onChange(block.id, val))}
+                        {renderBlockContent(block, values[block.id] || '', (val) => onChange(block.id, val), values)}
                     </div>
                 ))}
             </div>
@@ -56,9 +56,21 @@ export function SigningCanvas({ blocks, values, onChange, pdfUrl }: SigningCanva
     );
 }
 
-function renderBlockContent(block: EditorBlock, value: string, onChange: (val: string) => void) {
-    // STATIC TEXT: Render as read-only text, preserving whitespace
+function renderBlockContent(block: EditorBlock, value: string, onChange: (val: string) => void, allValues: Record<string, string>) {
+    // STATIC TEXT: Render as read-only text, preserving whitespace, but performing variable substitution
     if (block.type === 'text') {
+        let content = block.content || "";
+
+        // Perform interpolation
+        if (content) {
+            Object.entries(allValues || {}).forEach(([key, val]) => {
+                if (val) {
+                    const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+                    content = content.replace(regex, val);
+                }
+            });
+        }
+
         return (
             <div
                 className="w-full h-full text-gray-900 leading-relaxed font-normal whitespace-pre-wrap"
@@ -67,7 +79,7 @@ function renderBlockContent(block: EditorBlock, value: string, onChange: (val: s
                     fontSize: '1rem',
                 }}
             >
-                {block.content || ""}
+                {content}
             </div>
         );
     }

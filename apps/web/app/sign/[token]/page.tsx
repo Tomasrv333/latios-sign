@@ -35,6 +35,8 @@ export default function SignDocumentPage() {
                 return res.json();
             })
             .then((data) => {
+                console.log("Document loaded:", data);
+                console.log("Signer Variables:", data.signerVariables);
                 if (data.status === 'COMPLETED') {
                     setIsComplete(true);
                 }
@@ -65,6 +67,15 @@ export default function SignDocumentPage() {
         // Validate required fields
         const blocks = documentData.structure.blocks as EditorBlock[];
         const signatureBlocks = blocks.filter(b => b.type === 'signature');
+
+        // Validate Signer Variables
+        if (documentData.signerVariables && documentData.signerVariables.length > 0) {
+            const missing = (documentData.signerVariables as string[]).filter(v => !values[v] || !values[v].trim());
+            if (missing.length > 0) {
+                showToast(`Por favor completa los campos: ${missing.join(', ')}`, 'error');
+                return;
+            }
+        }
 
         for (const block of signatureBlocks) {
             if (!values[block.id]) {
@@ -151,7 +162,39 @@ export default function SignDocumentPage() {
                 </div>
             </header>
 
-            <main className="flex-1 overflow-hidden flex flex-col relative w-full">
+            <main className="flex-1 overflow-hidden flex relative w-full">
+
+                {/* Side Panel for Variables */}
+                {documentData?.signerVariables && documentData.signerVariables.length > 0 && (
+                    <div className="w-full md:w-96 bg-white border-r border-gray-200 flex flex-col z-10 shrink-0 shadow-lg animate-in slide-in-from-left-4 duration-300">
+                        <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+                            <h2 className="text-lg font-bold text-gray-900">Datos solicitados</h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Por favor completa la siguiente información para generar el documento final.
+                            </p>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                            {(documentData.signerVariables as string[]).map((variable) => (
+                                <div key={variable}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
+                                        {variable.replace(/_/g, ' ')} <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={values[variable] || ''}
+                                        onChange={(e) => handleValueChange(variable, e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
+                                        placeholder="Escribe aquí..."
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        <div className="p-4 border-t border-gray-100 bg-gray-50 text-xs text-gray-400 text-center">
+                            Estos datos se incorporarán automáticamente al documento.
+                        </div>
+                    </div>
+                )}
+
                 <SigningCanvas
                     blocks={blocks}
                     values={values}
