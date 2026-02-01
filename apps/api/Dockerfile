@@ -3,20 +3,19 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
-# Instalamos dependencias del sistema para Prisma
+# Instalamos OpenSSL (vital para Prisma) y herramientas de compilación
 RUN apt-get update && apt-get install -y openssl python3 make g++ && rm -rf /var/lib/apt/lists/*
 
-COPY . /app
 WORKDIR /app
+COPY . .
 
-# Instalamos TODAS las dependencias del monorepo
+# 1. Instalar dependencias
 RUN pnpm install --frozen-lockfile
 
-# GENERACIÓN DE PRISMA (El orden importa)
-# Forzamos la generación del cliente específicamente para la API
-RUN pnpm --filter api exec prisma generate
+# 2. Generar Prisma ANTES del build (apuntando al schema)
+RUN pnpm --filter api exec prisma generate --schema=./apps/api/prisma/schema.prisma
 
-# COMPILACIÓN
+# 3. Compilar NestJS (ahora sí encontrará los tipos)
 RUN pnpm --filter api build
 
 EXPOSE 3000
