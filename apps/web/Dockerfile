@@ -17,12 +17,10 @@ ENV NODE_ENV production
 ENV CI=true
 
 # Copiamos lo esencial y los archivos de configuración del monorepo
-COPY --from=builder /app/package.json .
-COPY --from=builder /app/pnpm-workspace.yaml .
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/web/public ./apps/web/public
-COPY --from=builder /app/apps/web/.next ./apps/web/.next
-COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
+COPY --from=builder /app/apps/web ./apps/web
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
 EXPOSE 3000
 

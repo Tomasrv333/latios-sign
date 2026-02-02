@@ -21,4 +21,4 @@ RUN pnpm --filter api build
 # 4. Ejecución (Nos paramos donde está el dist)
 WORKDIR /app
 EXPOSE 3000
-CMD ["node", "apps/api/dist/main"]
+CMD ["node", "apps/api/dist/main.js"]
