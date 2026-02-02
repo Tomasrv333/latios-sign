@@ -14,11 +14,17 @@ RUN NODE_OPTIONS="--max-old-space-size=1536" pnpm --filter web build
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV production
-# Copiamos solo lo necesario para ejecutar
+ENV CI=true
+
+# Copiamos lo esencial y los archivos de configuración del monorepo
+COPY --from=builder /app/package.json .
+COPY --from=builder /app/pnpm-workspace.yaml .
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/web/public ./apps/web/public
 COPY --from=builder /app/apps/web/.next ./apps/web/.next
-COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
 
 EXPOSE 3000
-CMD ["pnpm", "--filter", "web", "start"]
+# Entramos a la carpeta de la web para iniciar
+WORKDIR /app/apps/web
+CMD ["node_modules/.bin/next", "start"]

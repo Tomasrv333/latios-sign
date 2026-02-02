@@ -3,23 +3,22 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
-# Instalamos OpenSSL (El log confirmó que es obligatorio)
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY . .
-
 ENV CI=true
 
-# 1. Instalamos permitiendo scripts de construcción (Para pnpm v10)
+# 1. Instalación
 RUN pnpm install --frozen-lockfile --unsafe-perm
 
-# 2. Generamos Prisma usando la ruta RELATIVA CORRECTA
-# Si estás en la raíz del monorepo dentro de /app:
+# 2. Generar Prisma (RUTA CORREGIDA)
 RUN pnpm --filter api exec prisma generate --schema=./prisma/schema.prisma
 
-# 3. Compilamos
+# 3. Compilar
 RUN pnpm --filter api build
 
+# 4. Ejecución (Nos paramos donde está el dist)
+WORKDIR /app/apps/api
 EXPOSE 3000
-CMD [ "pnpm", "--filter", "api", "start:prod" ]
+CMD ["node", "dist/main"]
