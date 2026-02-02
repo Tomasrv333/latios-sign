@@ -25,6 +25,5 @@ COPY --from=builder /app/apps/web/.next ./apps/web/.next
 COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
 
 EXPOSE 3000
-# Entramos a la carpeta de la web para iniciar
-WORKDIR /app/apps/web
-CMD ["node_modules/.bin/next", "start"]
+
+CMD ["pnpm", "--filter", "web", "start"]

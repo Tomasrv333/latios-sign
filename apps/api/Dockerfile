@@ -19,6 +19,6 @@ RUN pnpm --filter api exec prisma generate --schema=./prisma/schema.prisma
 RUN pnpm --filter api build
 
 # 4. Ejecución (Nos paramos donde está el dist)
-WORKDIR /app/apps/api
+WORKDIR /app
 EXPOSE 3000
-CMD ["node", "dist/main"]
+CMD ["node", "apps/api/dist/main"]
