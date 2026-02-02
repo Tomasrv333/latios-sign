@@ -17,6 +17,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
+          command_timeout: 15m
           script: |
             if [ ! -d "latios-sign" ]; then
               git clone https://github.com/${{ github.repository }}.git latios-sign
